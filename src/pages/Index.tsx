@@ -2,6 +2,7 @@ import { Header } from '@/components/Header';
 import { SwapCard } from '@/components/SwapCard';
 import { ContractStats } from '@/components/ContractStats';
 import { useWallet } from '@/hooks/useWallet';
+import { useTheme } from '@/hooks/useTheme';
 
 const Index = () => {
   const {
@@ -17,6 +18,8 @@ const Index = () => {
     refreshBalances,
   } = useWallet();
 
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <div className="min-h-screen bg-background">
       <Header
@@ -25,6 +28,8 @@ const Index = () => {
         isLoading={isLoading}
         onConnect={connect}
         onDisconnect={disconnect}
+        theme={theme}
+        onThemeToggle={toggleTheme}
       />
       
       <main className="container max-w-screen-xl py-8 md:py-12">
