@@ -1,6 +1,4 @@
 import { createClient } from '@stacks/blockchain-api-client';
-import { Cl, fetchCallReadOnlyFunction } from '@stacks/transactions';
-import { STACKS_MAINNET } from '@stacks/network';
 
 // Contract addresses - update with actual addresses
 const XBTC_CONTRACT_ADDRESS = 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR';
@@ -28,58 +26,40 @@ export interface ContractBalance {
 
 export const stacksApiService = {
   /**
-   * Get xBTC balance for an address
+   * Get token balances for an address using address balances API
    */
-  async getXbtcBalance(address: string): Promise<TokenBalance> {
+  async getAddressBalances(address: string): Promise<ContractBalance> {
     try {
-      const result = await fetchCallReadOnlyFunction({
-        contractAddress: XBTC_CONTRACT_ADDRESS,
-        contractName: XBTC_CONTRACT_NAME,
-        functionName: 'get-balance',
-        functionArgs: [Cl.principal(address)],
-        network: STACKS_MAINNET,
-        senderAddress: address,
+      const { data } = await client.GET('/extended/v1/address/{principal}/balances', {
+        params: {
+          path: { principal: address },
+        },
       });
 
-      const balance = result.type === 'ok' && result.value.type === 'uint' 
-        ? result.value.value 
-        : '0';
-      
-      const decimals = 8;
-      const formatted = formatBalance(balance.toString(), decimals);
+      const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin`;
+      const sbtcKey = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::sbtc-token`;
 
-      return { balance: balance.toString(), decimals, formatted };
+      const xbtcBalance = data?.fungible_tokens?.[xbtcKey]?.balance || '0';
+      const sbtcBalance = data?.fungible_tokens?.[sbtcKey]?.balance || '0';
+
+      return {
+        xbtc: {
+          balance: xbtcBalance,
+          decimals: 8,
+          formatted: formatBalance(xbtcBalance, 8),
+        },
+        sbtc: {
+          balance: sbtcBalance,
+          decimals: 8,
+          formatted: formatBalance(sbtcBalance, 8),
+        },
+      };
     } catch (error) {
-      console.error('Failed to fetch xBTC balance:', error);
-      return { balance: '0', decimals: 8, formatted: '0.00000000' };
-    }
-  },
-
-  /**
-   * Get sBTC balance for an address
-   */
-  async getSbtcBalance(address: string): Promise<TokenBalance> {
-    try {
-      const result = await fetchCallReadOnlyFunction({
-        contractAddress: SBTC_CONTRACT_ADDRESS,
-        contractName: SBTC_CONTRACT_NAME,
-        functionName: 'get-balance',
-        functionArgs: [Cl.principal(address)],
-        network: STACKS_MAINNET,
-        senderAddress: address,
-      });
-
-      const balance = result.type === 'ok' && result.value.type === 'uint' 
-        ? result.value.value 
-        : '0';
-      
-      const decimals = 8;
-      const formatted = formatBalance(balance.toString(), decimals);
-
-      return { balance: balance.toString(), decimals, formatted };
-    } catch (error) {
-      console.error('Failed to fetch sBTC balance:', error);
-      return { balance: '0', decimals: 8, formatted: '0.00000000' };
+      console.error('Failed to fetch address balances:', error);
+      return {
+        xbtc: { balance: '0', decimals: 8, formatted: '0.00000000' },
+        sbtc: { balance: '0', decimals: 8, formatted: '0.00000000' },
+      };
     }
   },
 
@@ -87,26 +67,14 @@ export const stacksApiService = {
    * Get the swap contract's token balances
    */
   async getSwapContractBalance(): Promise<ContractBalance> {
-    const contractAddress = `${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`;
-    
-    const [xbtc, sbtc] = await Promise.all([
-      this.getXbtcBalance(SWAP_CONTRACT_ADDRESS),
-      this.getSbtcBalance(SWAP_CONTRACT_ADDRESS),
-    ]);
-
-    return { xbtc, sbtc };
+    return this.getAddressBalances(SWAP_CONTRACT_ADDRESS);
   },
 
   /**
    * Get user balances for both tokens
    */
   async getUserBalances(address: string): Promise<ContractBalance> {
-    const [xbtc, sbtc] = await Promise.all([
-      this.getXbtcBalance(address),
-      this.getSbtcBalance(address),
-    ]);
-
-    return { xbtc, sbtc };
+    return this.getAddressBalances(address);
   },
 
   /**
