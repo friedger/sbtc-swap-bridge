@@ -55,34 +55,34 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
         {/* xBTC Balance */}
         <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-3">
           <div className="flex items-center gap-3">
-            <BitcoinLogo className="h-8 w-8" />
+            <BitcoinLogo className="h-8 w-8 grayscale opacity-60" />
             <div>
-              <p className="font-medium">xBTC</p>
-              <p className="text-xs text-muted-foreground">Wrapped Bitcoin</p>
+              <p className="font-medium text-muted-foreground">xBTC</p>
+              <p className="text-xs text-muted-foreground/70">Wrapped Bitcoin (deprecated)</p>
             </div>
           </div>
           {isLoading ? (
             <Skeleton className="h-6 w-24" />
           ) : (
-            <span className="font-mono text-lg">
+            <span className="font-mono text-lg text-muted-foreground">
               {contractBalances?.xbtc.formatted || '0.00000000'}
             </span>
           )}
         </div>
 
         {/* sBTC Balance */}
-        <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-3">
+        <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center gap-3">
             <SbtcLogo className="h-8 w-8" />
             <div>
-              <p className="font-medium">sBTC</p>
+              <p className="font-medium text-primary">sBTC</p>
               <p className="text-xs text-muted-foreground">Stacks Bitcoin</p>
             </div>
           </div>
           {isLoading ? (
             <Skeleton className="h-6 w-24" />
           ) : (
-            <span className="font-mono text-lg">
+            <span className="font-mono text-lg text-primary">
               {contractBalances?.sbtc.formatted || '0.00000000'}
             </span>
           )}
@@ -92,7 +92,7 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              sBTC Coverage of Liquid xBTC Supply
+              <span className="text-primary">sBTC</span> Coverage of Liquid <span className="text-muted-foreground/70">xBTC</span> Supply
             </p>
             {isLoading ? (
               <Skeleton className="h-5 w-16" />
