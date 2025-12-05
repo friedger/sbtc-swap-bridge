@@ -2,6 +2,8 @@ import { ArrowDown, Loader2, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ContractBalance } from '@/services/stacksApiService';
+import { BitcoinLogo } from '@/components/icons/BitcoinLogo';
+import { SbtcLogo } from '@/components/icons/SbtcLogo';
 
 interface SwapCardProps {
   userBalances: ContractBalance | null;
@@ -60,7 +62,7 @@ export function SwapCard({
               {isConnected ? xbtcBalance : '—'}
             </span>
             <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1">
-              <div className="h-6 w-6 rounded-full bg-primary" />
+              <BitcoinLogo className="h-6 w-6" />
               <span className="font-medium text-accent-foreground">xBTC</span>
             </div>
           </div>
@@ -86,7 +88,7 @@ export function SwapCard({
               {isConnected ? xbtcBalance : '—'}
             </span>
             <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1">
-              <div className="h-6 w-6 rounded-full bg-chart-3" />
+              <SbtcLogo className="h-6 w-6" />
               <span className="font-medium text-accent-foreground">sBTC</span>
             </div>
           </div>
