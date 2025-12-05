@@ -10,23 +10,40 @@ interface ContractStatsProps {
   isLoading: boolean;
 }
 
-function calculatePercentage(sbtcBalance: string | undefined, totalSupply: string | undefined): string {
-  if (!sbtcBalance || !totalSupply || totalSupply === '0') return '0.00';
-  const sbtc = BigInt(sbtcBalance);
+function calculateLiquidSupply(totalSupply: string | undefined, contractXbtcBalance: string | undefined): bigint {
+  if (!totalSupply) return BigInt(0);
   const supply = BigInt(totalSupply);
-  if (supply === BigInt(0)) return '0.00';
+  const contractXbtc = contractXbtcBalance ? BigInt(contractXbtcBalance) : BigInt(0);
+  return supply - contractXbtc;
+}
+
+function calculatePercentage(sbtcBalance: string | undefined, liquidSupply: bigint): string {
+  if (!sbtcBalance || liquidSupply === BigInt(0)) return '0.00';
+  const sbtc = BigInt(sbtcBalance);
   // Calculate percentage with 4 decimal precision
-  const percentage = (sbtc * BigInt(10000) / supply);
+  const percentage = (sbtc * BigInt(10000) / liquidSupply);
   const whole = percentage / BigInt(100);
   const decimal = percentage % BigInt(100);
   return `${whole}.${decimal.toString().padStart(2, '0')}`;
 }
 
+function formatBigIntBalance(value: bigint, decimals: number = 8): string {
+  const divisor = BigInt(10 ** decimals);
+  const whole = value / divisor;
+  const fraction = value % divisor;
+  return `${whole}.${fraction.toString().padStart(decimals, '0')}`;
+}
+
 export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: ContractStatsProps) {
+  const liquidSupply = calculateLiquidSupply(
+    xbtcTotalSupply?.totalSupply,
+    contractBalances?.xbtc.balance
+  );
   const percentage = calculatePercentage(
     contractBalances?.sbtc.balance,
-    xbtcTotalSupply?.totalSupply
+    liquidSupply
   );
+  const liquidSupplyFormatted = formatBigIntBalance(liquidSupply);
 
   return (
     <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
@@ -75,7 +92,7 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              sBTC Coverage of xBTC Supply
+              sBTC Coverage of Liquid xBTC Supply
             </p>
             {isLoading ? (
               <Skeleton className="h-5 w-16" />
@@ -85,9 +102,17 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
               </span>
             )}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Total xBTC supply: {xbtcTotalSupply?.formatted || '0.00000000'}
-          </p>
+          <div className="mt-2 space-y-1">
+            <p className="text-xs text-muted-foreground">
+              Total xBTC supply: {xbtcTotalSupply?.formatted || '0.00000000'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Contract xBTC balance: {contractBalances?.xbtc.formatted || '0.00000000'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Liquid xBTC supply: {liquidSupplyFormatted}
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
