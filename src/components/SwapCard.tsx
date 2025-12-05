@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button';
 import { ContractBalance } from '@/services/stacksApiService';
 import { BitcoinLogo } from '@/components/icons/BitcoinLogo';
 import { SbtcLogo } from '@/components/icons/SbtcLogo';
+import { TxStatus } from '@/services/transactionWebSocketService';
 
 interface SwapCardProps {
   userBalances: ContractBalance | null;
   contractBalances: ContractBalance | null;
   isConnected: boolean;
   isSwapping: boolean;
-  txStatus: string | null;
+  txStatus: TxStatus | null;
   onSwap: () => void;
   onRefresh: () => void;
   isLoading: boolean;
@@ -113,16 +114,15 @@ export function SwapCard({
           <div className={`rounded-lg p-3 text-sm text-center ${
             txStatus === 'success' 
               ? 'bg-green-500/10 text-green-500' 
-              : txStatus === 'failed' || txStatus.startsWith('abort')
+              : txStatus === 'failed'
                 ? 'bg-destructive/10 text-destructive'
                 : 'bg-primary/10 text-primary'
           }`}>
             {txStatus === 'pending' && 'Waiting for wallet confirmation...'}
-            {txStatus === 'submitted' && 'Transaction submitted. Waiting for confirmation...'}
+            {txStatus === 'submitted' && 'Transaction submitted...'}
+            {txStatus === 'in_mempool' && 'In mempool, waiting for confirmation...'}
             {txStatus === 'success' && 'Swap completed successfully!'}
             {txStatus === 'failed' && 'Transaction failed. Please try again.'}
-            {txStatus === 'timeout' && 'Transaction is taking longer than expected.'}
-            {txStatus.startsWith('abort') && 'Transaction was aborted.'}
           </div>
         )}
 
