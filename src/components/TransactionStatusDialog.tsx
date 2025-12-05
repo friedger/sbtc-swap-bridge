@@ -6,9 +6,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle2, XCircle, Loader2, ExternalLink, Zap, Lock } from 'lucide-react';
+import { CheckCircle2, XCircle, Loader2, ExternalLink, Lock } from 'lucide-react';
 import { TxStatus } from '@/services/transactionWebSocketService';
 import { EXPLORER_TX_BASE_URL, FAST_POOL_URL, NETWORK } from '@/lib/constants';
+import fastPoolLogo from '@/assets/fast-pool-logo.svg';
 
 interface TransactionStatusDialogProps {
   isOpen: boolean;
@@ -137,9 +138,9 @@ export function TransactionStatusDialog({
               <div className="flex items-start gap-3">
                 <Lock className="h-5 w-5 text-primary mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-sm">Unlock More Bitcoin Yield with Dual Stacking</h3>
+                  <h3 className="font-semibold text-sm">Unlock Bitcoin Yield with Dual Stacking</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Lock your STX and hold sBTC to earn enhanced Bitcoin rewards. 
+                    Hold sBTC and lock STX to earn Bitcoin rewards. 
                     Earn ~5-10% APY on your STX while supporting the Stacks network.
                   </p>
                 </div>
@@ -148,12 +149,12 @@ export function TransactionStatusDialog({
 
             <div className="rounded-lg border border-chart-4/20 bg-chart-4/5 p-4">
               <div className="flex items-start gap-3">
-                <Zap className="h-5 w-5 text-chart-4 mt-0.5" />
+                <img src={fastPoolLogo} alt="Fast Pool" className="h-5 w-5 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-sm">Fast Pool - The Original Stacking Pool</h3>
+                  <h3 className="font-semibold text-sm">Fast Pool - The Longest Stacking Pool</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Self-service stacking pool on Stacks. Immediate stacking, STX rewards, 
-                    operated by Friedger (same developer as this swap app).
+                    Self-service stacking pool on Stacks. Immediate stacking, rewards in STX or sBTC, 
+                    operated by Ryder (same developer as this swap app).
                   </p>
                 </div>
               </div>
@@ -163,7 +164,7 @@ export function TransactionStatusDialog({
               className="w-full"
               onClick={() => window.open(FAST_POOL_URL, '_blank')}
             >
-              <Zap className="mr-2 h-4 w-4" />
+              <img src={fastPoolLogo} alt="" className="mr-2 h-4 w-4" />
               Join Fast Pool
             </Button>
           </div>
