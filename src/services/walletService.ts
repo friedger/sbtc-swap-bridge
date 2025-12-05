@@ -1,5 +1,11 @@
-import { connect, disconnect, isConnected, getLocalStorage, request } from '@stacks/connect';
-import { Pc } from '@stacks/transactions';
+import {
+  connect,
+  disconnect,
+  isConnected,
+  getLocalStorage,
+  request,
+} from "@stacks/connect";
+import { Cl, Pc } from "@stacks/transactions";
 import {
   SWAP_CONTRACT_ID,
   SWAP_CONTRACT_ADDRESS,
@@ -9,7 +15,10 @@ import {
   SBTC_CONTRACT_ADDRESS,
   SBTC_CONTRACT_NAME,
   NETWORK,
-} from '@/lib/constants';
+  XBTC_ASSET_NAME,
+  SBTC_CONTRACT_ID,
+  XBTC_CONTRACT_ID,
+} from "@/lib/constants";
 
 export interface WalletState {
   isConnected: boolean;
@@ -25,14 +34,18 @@ export const walletService = {
     try {
       const response = await connect();
       const addresses = response?.addresses || [];
-      
-      const stxAddress = addresses.find(
-        (addr: { address: string }) => addr.address.startsWith('SP') || addr.address.startsWith('ST')
-      )?.address || null;
-      
-      const btcAddress = addresses.find(
-        (addr: { address: string }) => addr.address.startsWith('bc1') || addr.address.startsWith('tb1')
-      )?.address || null;
+
+      const stxAddress =
+        addresses.find(
+          (addr: { address: string }) =>
+            addr.address.startsWith("SP") || addr.address.startsWith("ST")
+        )?.address || null;
+
+      const btcAddress =
+        addresses.find(
+          (addr: { address: string }) =>
+            addr.address.startsWith("bc1") || addr.address.startsWith("tb1")
+        )?.address || null;
 
       return {
         isConnected: true,
@@ -40,7 +53,7 @@ export const walletService = {
         btcAddress,
       };
     } catch (error) {
-      console.error('Failed to connect wallet:', error);
+      console.error("Failed to connect wallet:", error);
       throw error;
     }
   },
@@ -64,7 +77,7 @@ export const walletService = {
    */
   getStoredWallet(): WalletState {
     const data = getLocalStorage();
-    
+
     if (!data?.addresses) {
       return { isConnected: false, stxAddress: null, btcAddress: null };
     }
@@ -89,25 +102,25 @@ export const walletService = {
       // Post condition: User sends xBTC
       const userSendsXbtc = Pc.principal(userAddress)
         .willSendEq(amount)
-        .ft(`${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}`, 'wrapped-bitcoin');
+        .ft(XBTC_CONTRACT_ID, XBTC_ASSET_NAME);
 
       // Post condition: Contract sends sBTC
-      const contractSendsSbtc = Pc.principal(`${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`)
+      const contractSendsSbtc = Pc.principal(SWAP_CONTRACT_ID)
         .willSendEq(amount)
-        .ft(`${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}`, 'sbtc-token');
+        .ft(SBTC_CONTRACT_ID, XBTC_ASSET_NAME);
 
-      const response = await request('stx_callContract', {
+      const response = await request("stx_callContract", {
         contract: SWAP_CONTRACT_ID,
-        functionName: 'xbtc-to-sbtc-swap',
-        functionArgs: [`u${amount}`],
+        functionName: "xbtc-to-sbtc-swap",
+        functionArgs: [Cl.uint(amount)],
         network: NETWORK,
-        postConditionMode: 'deny',
+        postConditionMode: "deny",
         postConditions: [userSendsXbtc, contractSendsSbtc],
       } as any);
 
       return { txid: response.txid };
     } catch (error) {
-      console.error('Swap transaction failed:', error);
+      console.error("Swap transaction failed:", error);
       throw error;
     }
   },
