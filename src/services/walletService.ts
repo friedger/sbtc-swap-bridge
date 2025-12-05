@@ -3,7 +3,7 @@ import { Cl } from '@stacks/transactions';
 
 // Contract configuration - update these with actual contract details
 const SWAP_CONTRACT_ADDRESS = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9';
-const SWAP_CONTRACT_NAME = 'xbtc-to-sbtc-swap';
+const SWAP_CONTRACT_NAME = 'xbtc-sbtc-swap';
 
 export interface WalletState {
   isConnected: boolean;
