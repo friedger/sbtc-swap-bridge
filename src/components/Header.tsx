@@ -1,4 +1,5 @@
 import { WalletButton } from './WalletButton';
+import { ThemeToggle } from './ThemeToggle';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -6,6 +7,8 @@ interface HeaderProps {
   isLoading: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
+  theme: 'light' | 'dark';
+  onThemeToggle: () => void;
 }
 
 export function Header({
@@ -14,6 +17,8 @@ export function Header({
   isLoading,
   onConnect,
   onDisconnect,
+  theme,
+  onThemeToggle,
 }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -25,13 +30,16 @@ export function Header({
           <span className="text-lg font-semibold">xBTC → sBTC</span>
         </div>
         
-        <WalletButton
-          isConnected={isConnected}
-          stxAddress={stxAddress}
-          isLoading={isLoading}
-          onConnect={onConnect}
-          onDisconnect={onDisconnect}
-        />
+        <div className="flex items-center gap-4">
+          <ThemeToggle theme={theme} onToggle={onThemeToggle} />
+          <WalletButton
+            isConnected={isConnected}
+            stxAddress={stxAddress}
+            isLoading={isLoading}
+            onConnect={onConnect}
+            onDisconnect={onDisconnect}
+          />
+        </div>
       </div>
     </header>
   );
