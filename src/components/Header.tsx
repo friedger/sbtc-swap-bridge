@@ -1,5 +1,7 @@
 import { WalletButton } from './WalletButton';
 import { ThemeToggle } from './ThemeToggle';
+import { BitcoinLogo } from '@/components/icons/BitcoinLogo';
+import { SbtcLogo } from '@/components/icons/SbtcLogo';
 
 interface HeaderProps {
   isConnected: boolean;
@@ -24,10 +26,9 @@ export function Header({
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-xl items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">₿</span>
-          </div>
-          <span className="text-lg font-semibold">xBTC → sBTC</span>
+          <BitcoinLogo className="h-8 w-8" />
+          <span className="text-lg font-semibold">→</span>
+          <SbtcLogo className="h-8 w-8" />
         </div>
         
         <div className="flex items-center gap-4">

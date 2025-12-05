@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContractBalance } from '@/services/stacksApiService';
+import { BitcoinLogo } from '@/components/icons/BitcoinLogo';
+import { SbtcLogo } from '@/components/icons/SbtcLogo';
 
 interface ContractStatsProps {
   contractBalances: ContractBalance | null;
@@ -18,7 +20,7 @@ export function ContractStats({ contractBalances, isLoading }: ContractStatsProp
         {/* xBTC Balance */}
         <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-primary" />
+            <BitcoinLogo className="h-8 w-8" />
             <div>
               <p className="font-medium">xBTC</p>
               <p className="text-xs text-muted-foreground">Wrapped Bitcoin</p>
@@ -36,7 +38,7 @@ export function ContractStats({ contractBalances, isLoading }: ContractStatsProp
         {/* sBTC Balance */}
         <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-3">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-chart-3" />
+            <SbtcLogo className="h-8 w-8" />
             <div>
               <p className="font-medium">sBTC</p>
               <p className="text-xs text-muted-foreground">Stacks Bitcoin</p>
