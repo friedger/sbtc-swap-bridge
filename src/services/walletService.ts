@@ -1,9 +1,5 @@
 import { connect, disconnect, isConnected, getLocalStorage, request } from '@stacks/connect';
-import { Cl } from '@stacks/transactions';
-
-// Contract configuration - update these with actual contract details
-const SWAP_CONTRACT_ADDRESS = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9';
-const SWAP_CONTRACT_NAME = 'xbtc-sbtc-swap';
+import { SWAP_CONTRACT_ID, NETWORK } from '@/lib/constants';
 
 export interface WalletState {
   isConnected: boolean;
@@ -79,10 +75,10 @@ export const walletService = {
   async swapAll(): Promise<{ txid: string }> {
     try {
       const response = await request('stx_callContract', {
-        contract: `${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`,
+        contract: SWAP_CONTRACT_ID,
         functionName: 'swap-all',
         functionArgs: [],
-        network: 'mainnet',
+        network: NETWORK,
       });
 
       return { txid: response.txid };
@@ -96,6 +92,6 @@ export const walletService = {
    * Get the swap contract address
    */
   getSwapContractAddress(): string {
-    return `${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`;
+    return SWAP_CONTRACT_ID;
   },
 };

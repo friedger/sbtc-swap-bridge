@@ -3,6 +3,7 @@ import { SwapCard } from '@/components/SwapCard';
 import { ContractStats } from '@/components/ContractStats';
 import { useWallet } from '@/hooks/useWallet';
 import { useTheme } from '@/hooks/useTheme';
+import { EXPLORER_CONTRACT_URL, GITHUB_REPO_URL } from '@/lib/constants';
 
 const Index = () => {
   const {
@@ -97,7 +98,7 @@ const Index = () => {
           <p>Built on the Stacks blockchain. One-way swap only.</p>
           <div className="mt-3 flex items-center justify-center gap-4">
             <a
-              href="https://explorer.hiro.so/address/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap"
+              href={EXPLORER_CONTRACT_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
@@ -106,7 +107,7 @@ const Index = () => {
             </a>
             <span className="text-border">•</span>
             <a
-              href="https://github.com/friedger/sbtc-swap-bridge"
+              href={GITHUB_REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
