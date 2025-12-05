@@ -103,16 +103,19 @@ export function useWallet(): UseWalletReturn {
   };
 
   const swap = async () => {
-    if (!wallet.stxAddress || !userBalances) return;
+    if (!wallet.stxAddress || !userBalances || !contractBalances) return;
     
-    const xbtcAmount = parseInt(userBalances.xbtc.balance, 10);
-    if (xbtcAmount <= 0) return;
+    const userXbtc = BigInt(userBalances.xbtc.balance);
+    const contractSbtc = BigInt(contractBalances.sbtc.balance);
+    const swapAmount = userXbtc < contractSbtc ? userXbtc : contractSbtc;
+    
+    if (swapAmount <= 0n) return;
     
     setIsSwapping(true);
     setTxStatus('pending');
     
     try {
-      const { txid } = await walletService.swap(xbtcAmount, wallet.stxAddress);
+      const { txid } = await walletService.swap(Number(swapAmount), wallet.stxAddress);
       setTxStatus('submitted');
       
       // Wait for transaction confirmation
