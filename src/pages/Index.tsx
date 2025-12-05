@@ -103,7 +103,7 @@ const Index = () => {
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              Smart Contract
+              Smart contract code
             </a>
             <span className="text-border">•</span>
             <a
@@ -112,7 +112,7 @@ const Index = () => {
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              GitHub
+              Web app source code
             </a>
           </div>
         </div>
