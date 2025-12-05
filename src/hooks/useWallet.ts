@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { walletService, WalletState } from '@/services/walletService';
-import { stacksApiService, ContractBalance } from '@/services/stacksApiService';
+import { stacksApiService, ContractBalance, TotalSupply } from '@/services/stacksApiService';
 
 interface UseWalletReturn {
   wallet: WalletState;
   userBalances: ContractBalance | null;
   contractBalances: ContractBalance | null;
+  xbtcTotalSupply: TotalSupply | null;
   isLoading: boolean;
   isSwapping: boolean;
   txStatus: string | null;
@@ -23,6 +24,7 @@ export function useWallet(): UseWalletReturn {
   });
   const [userBalances, setUserBalances] = useState<ContractBalance | null>(null);
   const [contractBalances, setContractBalances] = useState<ContractBalance | null>(null);
+  const [xbtcTotalSupply, setXbtcTotalSupply] = useState<TotalSupply | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [txStatus, setTxStatus] = useState<string | null>(null);
@@ -42,15 +44,19 @@ export function useWallet(): UseWalletReturn {
     }
   }, [wallet.stxAddress]);
 
-  // Fetch contract balances on mount
+  // Fetch contract balances and xBTC total supply on mount
   useEffect(() => {
-    fetchContractBalances();
+    fetchContractBalancesAndSupply();
   }, []);
 
-  const fetchContractBalances = async () => {
+  const fetchContractBalancesAndSupply = async () => {
     try {
-      const balances = await stacksApiService.getSwapContractBalance();
+      const [balances, supply] = await Promise.all([
+        stacksApiService.getSwapContractBalance(),
+        stacksApiService.getXbtcTotalSupply(),
+      ]);
       setContractBalances(balances);
+      setXbtcTotalSupply(supply);
     } catch (error) {
       console.error('Failed to fetch contract balances:', error);
     }
@@ -129,6 +135,7 @@ export function useWallet(): UseWalletReturn {
     wallet,
     userBalances,
     contractBalances,
+    xbtcTotalSupply,
     isLoading,
     isSwapping,
     txStatus,

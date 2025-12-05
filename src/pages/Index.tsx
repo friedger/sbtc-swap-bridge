@@ -10,6 +10,7 @@ const Index = () => {
     wallet,
     userBalances,
     contractBalances,
+    xbtcTotalSupply,
     isLoading,
     isSwapping,
     txStatus,
@@ -60,6 +61,7 @@ const Index = () => {
           
           <ContractStats
             contractBalances={contractBalances}
+            xbtcTotalSupply={xbtcTotalSupply}
             isLoading={isLoading && !contractBalances}
           />
         </div>

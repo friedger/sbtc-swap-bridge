@@ -24,6 +24,11 @@ export interface ContractBalance {
   sbtc: TokenBalance;
 }
 
+export interface TotalSupply {
+  totalSupply: string;
+  formatted: string;
+}
+
 export const stacksApiService = {
   /**
    * Get token balances for an address using address balances API
@@ -111,6 +116,30 @@ export const stacksApiService = {
     }
     
     return 'timeout';
+  },
+
+  /**
+   * Get xBTC total supply
+   */
+  async getXbtcTotalSupply(): Promise<TotalSupply> {
+    try {
+      const response = await fetch(
+        `${STACKS_API_URL}/extended/v1/tokens/ft/${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin/supply`
+      );
+      const data = await response.json();
+
+      const totalSupply = data?.total_supply || '0';
+      return {
+        totalSupply,
+        formatted: formatBalance(totalSupply, 8),
+      };
+    } catch (error) {
+      console.error('Failed to fetch xBTC total supply:', error);
+      return {
+        totalSupply: '0',
+        formatted: '0.00000000',
+      };
+    }
   },
 };
 
