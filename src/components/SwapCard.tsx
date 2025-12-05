@@ -39,7 +39,7 @@ export function SwapCard({
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl">Swap xBTC → sBTC</CardTitle>
+            <CardTitle className="text-xl">Swap xBTC → <span style={{ color: '#FF5512' }}>sBTC</span></CardTitle>
             <CardDescription>One-way swap on Stacks</CardDescription>
           </div>
           {isConnected && (
