@@ -51,6 +51,7 @@ const Index = () => {
         <div className="flex flex-col items-center gap-6 md:flex-row md:items-start md:justify-center">
           <SwapCard
             userBalances={userBalances}
+            contractBalances={contractBalances}
             isConnected={wallet.isConnected}
             isSwapping={isSwapping}
             txStatus={txStatus}

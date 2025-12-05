@@ -7,6 +7,7 @@ import { SbtcLogo } from '@/components/icons/SbtcLogo';
 
 interface SwapCardProps {
   userBalances: ContractBalance | null;
+  contractBalances: ContractBalance | null;
   isConnected: boolean;
   isSwapping: boolean;
   txStatus: string | null;
@@ -17,6 +18,7 @@ interface SwapCardProps {
 
 export function SwapCard({
   userBalances,
+  contractBalances,
   isConnected,
   isSwapping,
   txStatus,
@@ -25,7 +27,11 @@ export function SwapCard({
   isLoading,
 }: SwapCardProps) {
   const xbtcBalance = userBalances?.xbtc.formatted || '0.00000000';
-  const hasXbtc = userBalances && BigInt(userBalances.xbtc.balance) > 0n;
+  const userXbtc = userBalances ? BigInt(userBalances.xbtc.balance) : 0n;
+  const contractSbtc = contractBalances ? BigInt(contractBalances.sbtc.balance) : 0n;
+  const swapAmount = userXbtc < contractSbtc ? userXbtc : contractSbtc;
+  const swapAmountFormatted = (Number(swapAmount) / 100_000_000).toFixed(8);
+  const canSwap = swapAmount > 0n;
 
   return (
     <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
@@ -59,7 +65,7 @@ export function SwapCard({
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-2xl font-semibold">
-              {isConnected ? xbtcBalance : '—'}
+              {isConnected ? swapAmountFormatted : '—'}
             </span>
             <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1">
               <BitcoinLogo className="h-6 w-6" />
@@ -85,7 +91,7 @@ export function SwapCard({
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-2xl font-semibold">
-              {isConnected ? xbtcBalance : '—'}
+              {isConnected ? swapAmountFormatted : '—'}
             </span>
             <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1">
               <SbtcLogo className="h-6 w-6" />
@@ -125,7 +131,7 @@ export function SwapCard({
           className="w-full"
           size="lg"
           onClick={onSwap}
-          disabled={!isConnected || !hasXbtc || isSwapping}
+          disabled={!isConnected || !canSwap || isSwapping}
         >
           {isSwapping ? (
             <>
@@ -134,8 +140,8 @@ export function SwapCard({
             </>
           ) : !isConnected ? (
             'Connect Wallet to Swap'
-          ) : !hasXbtc ? (
-            'No xBTC to Swap'
+          ) : !canSwap ? (
+            userXbtc === 0n ? 'No xBTC to Swap' : 'Insufficient Contract sBTC'
           ) : (
             'Swap All xBTC'
           )}
