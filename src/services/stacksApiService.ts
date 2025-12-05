@@ -1,16 +1,16 @@
 import { createClient } from '@stacks/blockchain-api-client';
-
-// Contract addresses - update with actual addresses
-const XBTC_CONTRACT_ADDRESS = 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR';
-const XBTC_CONTRACT_NAME = 'Wrapped-Bitcoin';
-const SBTC_CONTRACT_ADDRESS = 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4';
-const SBTC_CONTRACT_NAME = 'sbtc-token';
-const SWAP_CONTRACT_ADDRESS = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9';
-const SWAP_CONTRACT_NAME = 'xbtc-sbtc-swap';
+import {
+  XBTC_CONTRACT_ADDRESS,
+  XBTC_CONTRACT_NAME,
+  SBTC_CONTRACT_ADDRESS,
+  SBTC_CONTRACT_NAME,
+  SWAP_CONTRACT_ADDRESS,
+  STACKS_API_URL,
+} from '@/lib/constants';
 
 // Create API client
 const client = createClient({
-  baseUrl: 'https://api.mainnet.hiro.so',
+  baseUrl: STACKS_API_URL,
 });
 
 export interface TokenBalance {
