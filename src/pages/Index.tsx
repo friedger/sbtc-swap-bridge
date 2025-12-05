@@ -95,6 +95,25 @@ const Index = () => {
       <footer className="border-t border-border/40 py-6">
         <div className="container max-w-screen-xl text-center text-sm text-muted-foreground">
           <p>Built on the Stacks blockchain. One-way swap only.</p>
+          <div className="mt-3 flex items-center justify-center gap-4">
+            <a
+              href="https://explorer.hiro.so/address/SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Smart Contract
+            </a>
+            <span className="text-border">•</span>
+            <a
+              href="https://github.com/friedger/sbtc-swap-bridge"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              GitHub
+            </a>
+          </div>
         </div>
       </footer>
     </div>
