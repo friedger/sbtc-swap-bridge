@@ -6,7 +6,7 @@ const XBTC_CONTRACT_NAME = 'Wrapped-Bitcoin';
 const SBTC_CONTRACT_ADDRESS = 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4';
 const SBTC_CONTRACT_NAME = 'sbtc-token';
 const SWAP_CONTRACT_ADDRESS = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9';
-const SWAP_CONTRACT_NAME = 'xbtc-to-sbtc-swap';
+const SWAP_CONTRACT_NAME = 'xbtc-sbtc-swap';
 
 // Create API client
 const client = createClient({
