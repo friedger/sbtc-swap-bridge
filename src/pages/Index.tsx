@@ -1,6 +1,7 @@
 import { Header } from '@/components/Header';
 import { SwapCard } from '@/components/SwapCard';
 import { ContractStats } from '@/components/ContractStats';
+import { TransactionStatusDialog } from '@/components/TransactionStatusDialog';
 import { useWallet } from '@/hooks/useWallet';
 import { useTheme } from '@/hooks/useTheme';
 import { EXPLORER_CONTRACT_URL, GITHUB_REPO_URL } from '@/lib/constants';
@@ -14,10 +15,13 @@ const Index = () => {
     isLoading,
     isSwapping,
     txStatus,
+    txid,
+    isDialogOpen,
     connect,
     disconnect,
     swap,
     refreshBalances,
+    closeDialog,
   } = useWallet();
 
   const { theme, toggleTheme } = useTheme();
@@ -120,6 +124,14 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Transaction Status Dialog */}
+      <TransactionStatusDialog
+        isOpen={isDialogOpen}
+        onClose={closeDialog}
+        txid={txid}
+        status={txStatus || 'pending'}
+      />
     </div>
   );
 };

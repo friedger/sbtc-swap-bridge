@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { walletService, WalletState } from '@/services/walletService';
 import { stacksApiService, ContractBalance, TotalSupply } from '@/services/stacksApiService';
+import { transactionWebSocketService, TxStatus } from '@/services/transactionWebSocketService';
 
 interface UseWalletReturn {
   wallet: WalletState;
@@ -9,11 +10,14 @@ interface UseWalletReturn {
   xbtcTotalSupply: TotalSupply | null;
   isLoading: boolean;
   isSwapping: boolean;
-  txStatus: string | null;
+  txStatus: TxStatus | null;
+  txid: string | null;
+  isDialogOpen: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   swap: () => Promise<void>;
   refreshBalances: () => Promise<void>;
+  closeDialog: () => void;
 }
 
 export function useWallet(): UseWalletReturn {
@@ -27,7 +31,9 @@ export function useWallet(): UseWalletReturn {
   const [xbtcTotalSupply, setXbtcTotalSupply] = useState<TotalSupply | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
-  const [txStatus, setTxStatus] = useState<string | null>(null);
+  const [txStatus, setTxStatus] = useState<TxStatus | null>(null);
+  const [txid, setTxid] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Load stored wallet on mount
   useEffect(() => {
@@ -102,6 +108,15 @@ export function useWallet(): UseWalletReturn {
     setUserBalances(null);
   };
 
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    // Reset tx state after closing
+    if (txStatus === 'success' || txStatus === 'failed') {
+      setTxStatus(null);
+      setTxid(null);
+    }
+  };
+
   const swap = async () => {
     if (!wallet.stxAddress || !userBalances || !contractBalances) return;
     
@@ -113,23 +128,26 @@ export function useWallet(): UseWalletReturn {
     
     setIsSwapping(true);
     setTxStatus('pending');
+    setIsDialogOpen(true);
     
     try {
-      const { txid } = await walletService.swap(Number(swapAmount), wallet.stxAddress);
-      setTxStatus('submitted');
+      const { txid: newTxid } = await walletService.swap(Number(swapAmount), wallet.stxAddress);
+      setTxid(newTxid);
       
-      // Wait for transaction confirmation
-      const finalStatus = await stacksApiService.waitForTransaction(txid);
-      setTxStatus(finalStatus);
-      
-      if (finalStatus === 'success') {
-        // Refresh balances after successful swap
-        await refreshBalances();
-      }
+      // Subscribe to transaction updates via WebSocket
+      transactionWebSocketService.subscribeToTransaction(newTxid, (status, data) => {
+        setTxStatus(status);
+        
+        if (status === 'success') {
+          setIsSwapping(false);
+          refreshBalances();
+        } else if (status === 'failed') {
+          setIsSwapping(false);
+        }
+      });
     } catch (error) {
       console.error('Swap failed:', error);
       setTxStatus('failed');
-    } finally {
       setIsSwapping(false);
     }
   };
@@ -142,9 +160,12 @@ export function useWallet(): UseWalletReturn {
     isLoading,
     isSwapping,
     txStatus,
+    txid,
+    isDialogOpen,
     connect,
     disconnect,
     swap,
     refreshBalances,
+    closeDialog,
   };
 }

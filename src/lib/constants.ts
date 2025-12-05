@@ -17,10 +17,13 @@ export const SBTC_CONTRACT_ID = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}`
 
 // API URLs
 export const STACKS_API_URL = 'https://api.mainnet.hiro.so';
+export const STACKS_WS_URL = 'wss://api.mainnet.hiro.so';
 
 // External links
 export const EXPLORER_CONTRACT_URL = `https://explorer.hiro.so/txid/${SWAP_CONTRACT_ID}?chain=mainnet`;
+export const EXPLORER_TX_BASE_URL = 'https://explorer.hiro.so/txid';
 export const GITHUB_REPO_URL = 'https://github.com/friedger/sbtc-swap-bridge';
+export const FAST_POOL_URL = 'https://fastpool.org/members';
 
 // Network
 export const NETWORK = 'mainnet';
