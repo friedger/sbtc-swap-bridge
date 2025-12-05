@@ -1,4 +1,4 @@
-import { createClient } from '@stacks/blockchain-api-client';
+import { createClient } from "@stacks/blockchain-api-client";
 import {
   XBTC_CONTRACT_ADDRESS,
   XBTC_CONTRACT_NAME,
@@ -6,7 +6,13 @@ import {
   SBTC_CONTRACT_NAME,
   SWAP_CONTRACT_ADDRESS,
   STACKS_API_URL,
-} from '@/lib/constants';
+  NETWORK,
+} from "@/lib/constants";
+import {
+  fetchCallReadOnlyFunction,
+  ResponseOkCV,
+  UIntCV,
+} from "@stacks/transactions";
 
 // Create API client
 const client = createClient({
@@ -35,17 +41,20 @@ export const stacksApiService = {
    */
   async getAddressBalances(address: string): Promise<ContractBalance> {
     try {
-      const { data } = await client.GET('/extended/v1/address/{principal}/balances', {
-        params: {
-          path: { principal: address },
-        },
-      });
+      const { data } = await client.GET(
+        "/extended/v1/address/{principal}/balances",
+        {
+          params: {
+            path: { principal: address },
+          },
+        }
+      );
 
       const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin`;
       const sbtcKey = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::sbtc-token`;
 
-      const xbtcBalance = data?.fungible_tokens?.[xbtcKey]?.balance || '0';
-      const sbtcBalance = data?.fungible_tokens?.[sbtcKey]?.balance || '0';
+      const xbtcBalance = data?.fungible_tokens?.[xbtcKey]?.balance || "0";
+      const sbtcBalance = data?.fungible_tokens?.[sbtcKey]?.balance || "0";
 
       return {
         xbtc: {
@@ -60,10 +69,10 @@ export const stacksApiService = {
         },
       };
     } catch (error) {
-      console.error('Failed to fetch address balances:', error);
+      console.error("Failed to fetch address balances:", error);
       return {
-        xbtc: { balance: '0', decimals: 8, formatted: '0.00000000' },
-        sbtc: { balance: '0', decimals: 8, formatted: '0.00000000' },
+        xbtc: { balance: "0", decimals: 8, formatted: "0.00000000" },
+        sbtc: { balance: "0", decimals: 8, formatted: "0.00000000" },
       };
     }
   },
@@ -87,16 +96,16 @@ export const stacksApiService = {
    */
   async getTransactionStatus(txid: string): Promise<string> {
     try {
-      const { data } = await client.GET('/extended/v1/tx/{tx_id}', {
+      const { data } = await client.GET("/extended/v1/tx/{tx_id}", {
         params: {
           path: { tx_id: txid },
         },
       });
 
-      return data?.tx_status || 'pending';
+      return data?.tx_status || "pending";
     } catch (error) {
-      console.error('Failed to fetch transaction status:', error);
-      return 'unknown';
+      console.error("Failed to fetch transaction status:", error);
+      return "unknown";
     }
   },
 
@@ -106,16 +115,20 @@ export const stacksApiService = {
   async waitForTransaction(txid: string, maxAttempts = 60): Promise<string> {
     for (let i = 0; i < maxAttempts; i++) {
       const status = await this.getTransactionStatus(txid);
-      
-      if (status === 'success' || status === 'abort_by_response' || status === 'abort_by_post_condition') {
+
+      if (
+        status === "success" ||
+        status === "abort_by_response" ||
+        status === "abort_by_post_condition"
+      ) {
         return status;
       }
-      
+
       // Wait 5 seconds between checks
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
-    
-    return 'timeout';
+
+    return "timeout";
   },
 
   /**
@@ -123,21 +136,25 @@ export const stacksApiService = {
    */
   async getXbtcTotalSupply(): Promise<TotalSupply> {
     try {
-      const response = await fetch(
-        `${STACKS_API_URL}/extended/v1/tokens/ft/${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin/supply`
-      );
-      const data = await response.json();
+      const response = (await fetchCallReadOnlyFunction({
+        contractAddress: XBTC_CONTRACT_ADDRESS,
+        contractName: XBTC_CONTRACT_NAME,
+        functionName: "get-total-supply",
+        functionArgs: [],
+        network: NETWORK,
+        senderAddress: XBTC_CONTRACT_ADDRESS,
+      })) as ResponseOkCV<UIntCV>;
 
-      const totalSupply = data?.total_supply || '0';
+      const totalSupply = response.value.value.toString();
       return {
         totalSupply,
         formatted: formatBalance(totalSupply, 8),
       };
     } catch (error) {
-      console.error('Failed to fetch xBTC total supply:', error);
+      console.error("Failed to fetch xBTC total supply:", error);
       return {
-        totalSupply: '0',
-        formatted: '0.00000000',
+        totalSupply: "0",
+        formatted: "0.00000000",
       };
     }
   },
@@ -151,7 +168,7 @@ function formatBalance(balance: string, decimals: number): string {
   const divisor = BigInt(10 ** decimals);
   const whole = num / divisor;
   const fraction = num % divisor;
-  const fractionStr = fraction.toString().padStart(decimals, '0');
-  
+  const fractionStr = fraction.toString().padStart(decimals, "0");
+
   return `${whole}.${fractionStr}`;
 }

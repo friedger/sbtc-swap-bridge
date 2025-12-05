@@ -52,24 +52,6 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
         <CardDescription>Available tokens in the swap contract</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* xBTC Balance */}
-        <div className="flex items-center justify-between rounded-lg border border-border bg-background/50 p-3">
-          <div className="flex items-center gap-3">
-            <BitcoinLogo className="h-8 w-8 grayscale opacity-60" />
-            <div>
-              <p className="font-medium text-muted-foreground">xBTC</p>
-              <p className="text-xs text-muted-foreground/70">Wrapped Bitcoin (deprecated)</p>
-            </div>
-          </div>
-          {isLoading ? (
-            <Skeleton className="h-6 w-24" />
-          ) : (
-            <span className="font-mono text-lg text-muted-foreground">
-              {contractBalances?.xbtc.formatted || '0.00000000'}
-            </span>
-          )}
-        </div>
-
         {/* sBTC Balance */}
         <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-3">
           <div className="flex items-center gap-3">

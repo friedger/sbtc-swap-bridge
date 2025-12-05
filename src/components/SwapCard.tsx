@@ -68,8 +68,8 @@ export function SwapCard({
               {isConnected ? swapAmountFormatted : '—'}
             </span>
             <div className="flex items-center gap-2 rounded-full bg-accent px-3 py-1">
-              <BitcoinLogo className="h-6 w-6" />
-              <span className="font-medium text-accent-foreground">xBTC</span>
+              <BitcoinLogo className="h-6 w-6 grayscale opacity-60" />
+              <span className="font-medium text-foreground">xBTC</span>
             </div>
           </div>
         </div>
