@@ -1,5 +1,15 @@
 import { connect, disconnect, isConnected, getLocalStorage, request } from '@stacks/connect';
-import { SWAP_CONTRACT_ID, NETWORK } from '@/lib/constants';
+import { Pc } from '@stacks/transactions';
+import {
+  SWAP_CONTRACT_ID,
+  SWAP_CONTRACT_ADDRESS,
+  SWAP_CONTRACT_NAME,
+  XBTC_CONTRACT_ADDRESS,
+  XBTC_CONTRACT_NAME,
+  SBTC_CONTRACT_ADDRESS,
+  SBTC_CONTRACT_NAME,
+  NETWORK,
+} from '@/lib/constants';
 
 export interface WalletState {
   isConnected: boolean;
@@ -70,16 +80,30 @@ export const walletService = {
   },
 
   /**
-   * Call the swap-all function on the swap contract
+   * Call the xbtc-to-sbtc-swap function on the swap contract
+   * @param amount - Amount of xBTC to swap in sats
+   * @param userAddress - The user's STX address for post conditions
    */
-  async swapAll(): Promise<{ txid: string }> {
+  async swap(amount: number, userAddress: string): Promise<{ txid: string }> {
     try {
+      // Post condition: User sends xBTC
+      const userSendsXbtc = Pc.principal(userAddress)
+        .willSendEq(amount)
+        .ft(`${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}`, 'wrapped-bitcoin');
+
+      // Post condition: Contract sends sBTC
+      const contractSendsSbtc = Pc.principal(`${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`)
+        .willSendEq(amount)
+        .ft(`${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}`, 'sbtc-token');
+
       const response = await request('stx_callContract', {
         contract: SWAP_CONTRACT_ID,
-        functionName: 'swap-all',
-        functionArgs: [],
+        functionName: 'xbtc-to-sbtc-swap',
+        functionArgs: [`u${amount}`],
         network: NETWORK,
-      });
+        postConditionMode: 'deny',
+        postConditions: [userSendsXbtc, contractSendsSbtc],
+      } as any);
 
       return { txid: response.txid };
     } catch (error) {
