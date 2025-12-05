@@ -43,7 +43,7 @@ const Index = () => {
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
             Swap <span className="text-chart-3">xBTC</span> to{' '}
-            <span className="text-primary">sBTC</span>
+            <span style={{ color: '#FF5512' }}>sBTC</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
             Seamlessly convert your Wrapped Bitcoin (xBTC) to Stacks Bitcoin (sBTC)
