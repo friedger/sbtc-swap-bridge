@@ -1,8 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContractBalance, TotalSupply } from '@/services/stacksApiService';
-import { BitcoinLogo } from '@/components/icons/BitcoinLogo';
 import { SbtcLogo } from '@/components/icons/SbtcLogo';
+import { EXPLORER_CONTRACT_URL } from '@/lib/constants';
+import { ExternalLink } from 'lucide-react';
 
 interface ContractStatsProps {
   contractBalances: ContractBalance | null;
@@ -49,7 +50,17 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
     <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg">Contract Liquidity</CardTitle>
-        <CardDescription>Available tokens in the swap contract</CardDescription>
+        <CardDescription>
+          Available tokens in the swap contract{' '}
+          <a 
+            href={EXPLORER_CONTRACT_URL} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* sBTC Balance */}
