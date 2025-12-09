@@ -1,4 +1,5 @@
 import {
+  DUAL_STACKING_CONTRACT_ID,
   NETWORK,
   SBTC_CONTRACT_ID,
   SWAP_CONTRACT_ID,
@@ -124,5 +125,46 @@ export const walletService = {
    */
   getSwapContractAddress(): string {
     return SWAP_CONTRACT_ID;
+  },
+
+  /**
+   * Enroll the swap contract into dual stacking
+   */
+  async enrollDualStacking(): Promise<{ txid: string }> {
+    try {
+      const response = await request("stx_callContract", {
+        contract: SWAP_CONTRACT_ID,
+        functionName: "enroll",
+        functionArgs: [
+          Cl.principal(DUAL_STACKING_CONTRACT_ID),
+          Cl.none(),
+        ],
+        network: NETWORK,
+      } as any);
+
+      return { txid: response.txid };
+    } catch (error) {
+      console.error("Enroll transaction failed:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Withdraw excess sBTC from the swap contract
+   */
+  async withdrawExcessSbtc(): Promise<{ txid: string }> {
+    try {
+      const response = await request("stx_callContract", {
+        contract: SWAP_CONTRACT_ID,
+        functionName: "withdraw-excess-sbtc",
+        functionArgs: [],
+        network: NETWORK,
+      } as any);
+
+      return { txid: response.txid };
+    } catch (error) {
+      console.error("Withdraw excess sBTC transaction failed:", error);
+      throw error;
+    }
   },
 };
