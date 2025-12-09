@@ -8,7 +8,7 @@ export const SBTC_CONTRACT_NAME = 'sbtc-token';
 export const SBTC_ASSET_NAME = 'sbtc-token';
 
 export const SWAP_CONTRACT_ADDRESS = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9';
-export const SWAP_CONTRACT_NAME = 'xbtc-sbtc-swap';
+export const SWAP_CONTRACT_NAME = 'xbtc-sbtc-swap-v2';
 
 // Full contract identifiers
 export const SWAP_CONTRACT_ID = `${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`;
