@@ -1,24 +1,18 @@
 import {
+  NETWORK,
+  SBTC_CONTRACT_ID,
+  SWAP_CONTRACT_ID,
+  XBTC_ASSET_NAME,
+  XBTC_CONTRACT_ID
+} from "@/lib/constants";
+import {
   connect,
   disconnect,
-  isConnected,
   getLocalStorage,
+  isConnected,
   request,
 } from "@stacks/connect";
 import { Cl, Pc } from "@stacks/transactions";
-import {
-  SWAP_CONTRACT_ID,
-  SWAP_CONTRACT_ADDRESS,
-  SWAP_CONTRACT_NAME,
-  XBTC_CONTRACT_ADDRESS,
-  XBTC_CONTRACT_NAME,
-  SBTC_CONTRACT_ADDRESS,
-  SBTC_CONTRACT_NAME,
-  NETWORK,
-  XBTC_ASSET_NAME,
-  SBTC_CONTRACT_ID,
-  XBTC_CONTRACT_ID,
-} from "@/lib/constants";
 
 export interface WalletState {
   isConnected: boolean;

@@ -1,13 +1,13 @@
-import { createClient } from "@stacks/blockchain-api-client";
 import {
-  XBTC_CONTRACT_ADDRESS,
-  XBTC_CONTRACT_NAME,
+  NETWORK,
   SBTC_CONTRACT_ADDRESS,
   SBTC_CONTRACT_NAME,
-  SWAP_CONTRACT_ADDRESS,
   STACKS_API_URL,
-  NETWORK,
+  SWAP_CONTRACT_ID,
+  XBTC_CONTRACT_ADDRESS,
+  XBTC_CONTRACT_NAME
 } from "@/lib/constants";
+import { createClient } from "@stacks/blockchain-api-client";
 import {
   fetchCallReadOnlyFunction,
   ResponseOkCV,
@@ -81,7 +81,7 @@ export const stacksApiService = {
    * Get the swap contract's token balances
    */
   async getSwapContractBalance(): Promise<ContractBalance> {
-    return this.getAddressBalances(SWAP_CONTRACT_ADDRESS);
+    return this.getAddressBalances(SWAP_CONTRACT_ID);
   },
 
   /**
