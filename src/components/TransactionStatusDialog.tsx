@@ -138,10 +138,9 @@ export function TransactionStatusDialog({
               <div className="flex items-start gap-3">
                 <Lock className="h-5 w-5 text-primary mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-sm">Unlock Bitcoin Yield with Dual Stacking</h3>
+                  <h3 className="font-semibold text-sm">Hold Bitcoin, Earn Bitcoin with Dual Stacking</h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Hold sBTC and lock STX to earn Bitcoin rewards. 
-                    Earn ~5-10% APY on your STX while supporting the Stacks network.
+                    No points. No nonsense. Just Bitcoin earning Bitcoin, powered by Stacks.
                   </p>
                 </div>
               </div>
