@@ -20,11 +20,15 @@ export const SWAP_CONTRACT_NAME = "xbtc-sbtc-swap-v3";
 
 export const DUAL_STACKING_CONTRACT_ID = 'SP1HFCRKEJ8BYW4D0E3FAWHFDX8A25PPAA83HWWZ9.dual-stacking-v1';
 
+// Custodian address
+export const CUSTODIAN_ADDRESS = "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9";
+
 // Full contract identifiers
 export const SWAP_CONTRACT_ID = `${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`;
 export const XBTC_CONTRACT_ID = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}`;
 export const SBTC_CONTRACT_ID = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}`;
 export const SWXBTC_CONTRACT_ID = `${SWXBTC_CONTRACT_ADDRESS}.${SWXBTC_CONTRACT_NAME}`;
+
 // API URLs
 export const STACKS_API_URL = "https://api.mainnet.hiro.so";
 export const STACKS_WS_URL = "wss://api.mainnet.hiro.so";
