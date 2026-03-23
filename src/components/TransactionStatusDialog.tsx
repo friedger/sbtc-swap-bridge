@@ -133,29 +133,29 @@ export function TransactionStatusDialog({
           <Separator />
 
           {/* Dual Stacking Promo */}
-          <div className="space-y-4">
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-              <div className="flex items-start gap-3">
-                <Lock className="h-5 w-5 text-primary mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-sm">Hold Bitcoin, Earn Bitcoin with Dual Stacking</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    No points. No nonsense. Just Bitcoin earning Bitcoin, powered by Stacks.
-                  </p>
-                </div>
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Sponsored</span>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+              <div>
+                <h3 className="font-semibold text-sm">Hold sBTC, Earn sBTC with Dual Stacking</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  No points. No nonsense. Just sBTC earning sBTCs.
+                </p>
               </div>
             </div>
 
-            <div className="rounded-lg border border-chart-4/20 bg-chart-4/5 p-4">
-              <div className="flex items-start gap-3">
-                <img src={fastPoolLogo} alt="Fast Pool" className="h-5 w-5 mt-0.5" />
-                <div>
-                  <h3 className="font-semibold text-sm">Fast Pool - The Longest Stacking Pool</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Self-service stacking pool on Stacks. Immediate stacking, rewards in STX or sBTC, 
-                    operated by Ryder (same developer as this swap app).
-                  </p>
-                </div>
+            <div className="flex items-start gap-3">
+              <img src={fastPoolLogo} alt="Fast Pool" className="h-5 w-5 mt-0.5 shrink-0" />
+              <div>
+                <h3 className="font-semibold text-sm">Earn more when Stacking with Fast Pool</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Self-service stacking pool on Stacks. Immediate stacking, rewards in STX or sBTC,
+                  operated by Ryder (same developer as this swap app).
+                </p>
               </div>
             </div>
 
