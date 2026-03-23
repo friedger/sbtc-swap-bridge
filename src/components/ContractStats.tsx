@@ -1,8 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContractBalance, TotalSupply } from '@/services/stacksApiService';
-import { BitcoinLogo } from '@/components/icons/BitcoinLogo';
 import { SbtcLogo } from '@/components/icons/SbtcLogo';
+import { EXPLORER_CONTRACT_URL } from '@/lib/constants';
+import { ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface ContractStatsProps {
   contractBalances: ContractBalance | null;
@@ -17,14 +19,16 @@ function calculateLiquidSupply(totalSupply: string | undefined, contractXbtcBala
   return supply - contractXbtc;
 }
 
-function calculatePercentage(sbtcBalance: string | undefined, liquidSupply: bigint): string {
-  if (!sbtcBalance || liquidSupply === BigInt(0)) return '0.00';
+function calculatePercentage(sbtcBalance: string | undefined, liquidSupply: bigint): number {
+  if (!sbtcBalance || liquidSupply === BigInt(0)) return 0;
   const sbtc = BigInt(sbtcBalance);
   // Calculate percentage with 4 decimal precision
-  const percentage = (sbtc * BigInt(10000) / liquidSupply);
-  const whole = percentage / BigInt(100);
-  const decimal = percentage % BigInt(100);
-  return `${whole}.${decimal.toString().padStart(2, '0')}`;
+  const percentage = Number((sbtc * BigInt(10000) / liquidSupply)) / 100;
+  return percentage;
+}
+
+function formatPercentage(percentage: number): string {
+  return percentage.toFixed(2);
 }
 
 function formatBigIntBalance(value: bigint, decimals: number = 8): string {
@@ -44,12 +48,23 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
     liquidSupply
   );
   const liquidSupplyFormatted = formatBigIntBalance(liquidSupply);
+  const isOverCoverage = percentage > 100;
 
   return (
     <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
       <CardHeader className="pb-4">
         <CardTitle className="text-lg">Contract Liquidity</CardTitle>
-        <CardDescription>Available tokens in the swap contract</CardDescription>
+        <CardDescription>
+          Available tokens in the swap contract{' '}
+          <a 
+            href={EXPLORER_CONTRACT_URL} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-0.5 text-primary hover:underline"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </a>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* sBTC Balance */}
@@ -79,8 +94,15 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
             {isLoading ? (
               <Skeleton className="h-5 w-16" />
             ) : (
-              <span className="font-mono font-medium text-primary">
-                {percentage}%
+              <span className={`font-mono font-medium ${isOverCoverage ? 'text-green-500' : 'text-primary'}`}>
+                {isOverCoverage ? (
+                  <Link to="/manage" className="hover:underline flex items-center gap-1">
+                    {formatPercentage(percentage)}%
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                ) : (
+                  `${formatPercentage(percentage)}%`
+                )}
               </span>
             )}
           </div>
