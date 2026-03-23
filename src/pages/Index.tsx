@@ -1,10 +1,16 @@
-import { Header } from '@/components/Header';
-import { SwapCard } from '@/components/SwapCard';
-import { ContractStats } from '@/components/ContractStats';
-import { TransactionStatusDialog } from '@/components/TransactionStatusDialog';
-import { useWallet } from '@/hooks/useWallet';
-import { useTheme } from '@/hooks/useTheme';
-import { EXPLORER_CONTRACT_URL, GITHUB_REPO_URL } from '@/lib/constants';
+import { Header } from "@/components/Header";
+import { SwapCard } from "@/components/SwapCard";
+import { ContractStats } from "@/components/ContractStats";
+import { TransactionStatusDialog } from "@/components/TransactionStatusDialog";
+import { useWallet } from "@/hooks/useWallet";
+import { useTheme } from "@/hooks/useTheme";
+import {
+  EXPLORER_CONTRACT_URL,
+  EXPLORER_XBTC_URL,
+  EXPLORER_SWXBTC_URL,
+  EXPLORER_SBTC_URL,
+  GITHUB_REPO_URL,
+} from "@/lib/constants";
 
 const Index = () => {
   const {
@@ -38,17 +44,17 @@ const Index = () => {
         theme={theme}
         onThemeToggle={toggleTheme}
       />
-      
+
       <main className="container max-w-screen-xl py-8 md:py-12">
         {/* Hero Section */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-            Swap <span className="text-muted-foreground">xBTC</span> to{' '}
-            <span style={{ color: '#FF5512' }}>sBTC</span>
+            Swap <span className="text-muted-foreground">xBTC</span> to{" "}
+            <span style={{ color: "#FF5512" }}>sBTC</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Convert your Wrapped Bitcoin (xBTC) to Stacks Bitcoin (sBTC)
-            in two steps: deposit xBTC, then claim sBTC after processing.
+            Convert your Wrapped Bitcoin (xBTC) to Stacks Bitcoin (sBTC) in two
+            steps: deposit xBTC, then claim sBTC after processing.
           </p>
         </div>
 
@@ -66,10 +72,11 @@ const Index = () => {
             onRefresh={refreshBalances}
             isLoading={isLoading}
           />
-          
+
           <ContractStats
             contractBalances={contractBalances}
             userBalances={userBalances}
+            userAddress={wallet.stxAddress}
             isConnected={wallet.isConnected}
             isLoading={isLoading && !contractBalances}
           />
@@ -98,6 +105,39 @@ const Index = () => {
                 </div>
                 <p>Claim your sBTC</p>
               </div>
+            </div>
+            {/* Links to contracts */}
+            <hr className="mt-12" />
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
+              Verify the contract code on-chain:
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
+              <a
+                href={EXPLORER_XBTC_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                xBTC token
+              </a>
+              <span className="text-border">•</span>
+              <a
+                href={EXPLORER_SWXBTC_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                swapping xbtc receipt token (swxBTC)
+              </a>
+              <span className="text-border">•</span>
+              <a
+                href={EXPLORER_SBTC_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                sBTC token
+              </a>
             </div>
           </div>
         </div>
@@ -133,7 +173,7 @@ const Index = () => {
         isOpen={isDialogOpen}
         onClose={closeDialog}
         txid={txid}
-        status={txStatus || 'pending'}
+        status={txStatus || "pending"}
       />
     </div>
   );

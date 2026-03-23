@@ -35,9 +35,13 @@ export const STACKS_WS_URL = "wss://api.mainnet.hiro.so";
 
 // External links
 export const EXPLORER_CONTRACT_URL = `https://explorer.hiro.so/txid/${SWAP_CONTRACT_ID}?chain=mainnet`;
+export const EXPLORER_XBTC_URL = `https://explorer.hiro.so/txid/${XBTC_CONTRACT_ID}?chain=mainnet`;
+export const EXPLORER_SWXBTC_URL = `https://explorer.hiro.so/txid/${SWXBTC_CONTRACT_ID}?chain=mainnet`;
+export const EXPLORER_SBTC_URL = `https://explorer.hiro.so/txid/${SBTC_CONTRACT_ID}?chain=mainnet`;
+export const EXPLORER_ADDRESS_URL = "https://explorer.hiro.so/address";
 export const EXPLORER_TX_BASE_URL = "https://explorer.hiro.so/txid";
 export const GITHUB_REPO_URL = "https://github.com/friedger/sbtc-swap-bridge";
-export const FAST_POOL_URL = "https://fastpool.org/members";
+export const FAST_POOL_URL = "https://fastpool.org/";
 
 // Network
 export const NETWORK = "mainnet";
