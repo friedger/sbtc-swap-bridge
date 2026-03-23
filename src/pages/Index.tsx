@@ -11,7 +11,6 @@ const Index = () => {
     wallet,
     userBalances,
     contractBalances,
-    xbtcTotalSupply,
     isLoading,
     isSwapping,
     txStatus,
@@ -19,7 +18,9 @@ const Index = () => {
     isDialogOpen,
     connect,
     disconnect,
-    swap,
+    depositXbtc,
+    claimSbtc,
+    withdrawXbtc,
     refreshBalances,
     closeDialog,
   } = useWallet();
@@ -42,12 +43,12 @@ const Index = () => {
         {/* Hero Section */}
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-            Swap <span className="text-chart-3">xBTC</span> to{' '}
+            Swap <span className="text-muted-foreground">xBTC</span> to{' '}
             <span style={{ color: '#FF5512' }}>sBTC</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-muted-foreground">
-            Seamlessly convert your Wrapped Bitcoin (xBTC) to Stacks Bitcoin (sBTC)
-            on the Stacks blockchain. One-way swap with 1:1 ratio.
+            Convert your Wrapped Bitcoin (xBTC) to Stacks Bitcoin (sBTC)
+            in two steps: deposit xBTC, then claim sBTC after processing.
           </p>
         </div>
 
@@ -59,14 +60,17 @@ const Index = () => {
             isConnected={wallet.isConnected}
             isSwapping={isSwapping}
             txStatus={txStatus}
-            onSwap={swap}
+            onDeposit={depositXbtc}
+            onClaim={claimSbtc}
+            onWithdraw={withdrawXbtc}
             onRefresh={refreshBalances}
             isLoading={isLoading}
           />
           
           <ContractStats
             contractBalances={contractBalances}
-            xbtcTotalSupply={xbtcTotalSupply}
+            userBalances={userBalances}
+            isConnected={wallet.isConnected}
             isLoading={isLoading && !contractBalances}
           />
         </div>
@@ -80,19 +84,19 @@ const Index = () => {
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   1
                 </div>
-                <p>Connect your Stacks wallet</p>
+                <p>Deposit your xBTC into the swap contract</p>
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   2
                 </div>
-                <p>Click "Swap All xBTC" to initiate</p>
+                <p>Wait for the custodian to process the unwrap</p>
               </div>
               <div className="flex flex-col items-center gap-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   3
                 </div>
-                <p>Confirm the transaction in your wallet</p>
+                <p>Claim your sBTC (or withdraw xBTC)</p>
               </div>
             </div>
           </div>
@@ -102,7 +106,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t border-border/40 py-6">
         <div className="container max-w-screen-xl text-center text-sm text-muted-foreground">
-          <p>Built on the Stacks blockchain. One-way swap only.</p>
+          <p>Built on the Stacks blockchain. Two-step swap process.</p>
           <div className="mt-3 flex items-center justify-center gap-4">
             <a
               href={EXPLORER_CONTRACT_URL}
@@ -125,7 +129,6 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Transaction Status Dialog */}
       <TransactionStatusDialog
         isOpen={isDialogOpen}
         onClose={closeDialog}

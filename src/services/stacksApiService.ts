@@ -4,6 +4,8 @@ import {
   SBTC_CONTRACT_NAME,
   STACKS_API_URL,
   SWAP_CONTRACT_ID,
+  SWXBTC_CONTRACT_ADDRESS,
+  SWXBTC_CONTRACT_NAME,
   XBTC_CONTRACT_ADDRESS,
   XBTC_CONTRACT_NAME
 } from "@/lib/constants";
@@ -25,6 +27,12 @@ export interface TokenBalance {
   formatted: string;
 }
 
+export interface UserBalances {
+  xbtc: TokenBalance;
+  sbtc: TokenBalance;
+  swxbtc: TokenBalance;
+}
+
 export interface ContractBalance {
   xbtc: TokenBalance;
   sbtc: TokenBalance;
@@ -37,7 +45,7 @@ export interface TotalSupply {
 
 export const stacksApiService = {
   /**
-   * Get token balances for an address using address balances API
+   * Get token balances for an address (contract: xBTC + sBTC only)
    */
   async getAddressBalances(address: string): Promise<ContractBalance> {
     try {
@@ -78,17 +86,59 @@ export const stacksApiService = {
   },
 
   /**
+   * Get user balances including swxBTC
+   */
+  async getUserBalances(address: string): Promise<UserBalances> {
+    try {
+      const { data } = await client.GET(
+        "/extended/v1/address/{principal}/balances",
+        {
+          params: {
+            path: { principal: address },
+          },
+        }
+      );
+
+      const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin`;
+      const sbtcKey = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::sbtc-token`;
+      const swxbtcKey = `${SWXBTC_CONTRACT_ADDRESS}.${SWXBTC_CONTRACT_NAME}::${SWXBTC_CONTRACT_NAME}`;
+
+      const xbtcBalance = data?.fungible_tokens?.[xbtcKey]?.balance || "0";
+      const sbtcBalance = data?.fungible_tokens?.[sbtcKey]?.balance || "0";
+      const swxbtcBalance = data?.fungible_tokens?.[swxbtcKey]?.balance || "0";
+
+      return {
+        xbtc: {
+          balance: xbtcBalance,
+          decimals: 8,
+          formatted: formatBalance(xbtcBalance, 8),
+        },
+        sbtc: {
+          balance: sbtcBalance,
+          decimals: 8,
+          formatted: formatBalance(sbtcBalance, 8),
+        },
+        swxbtc: {
+          balance: swxbtcBalance,
+          decimals: 8,
+          formatted: formatBalance(swxbtcBalance, 8),
+        },
+      };
+    } catch (error) {
+      console.error("Failed to fetch user balances:", error);
+      return {
+        xbtc: { balance: "0", decimals: 8, formatted: "0.00000000" },
+        sbtc: { balance: "0", decimals: 8, formatted: "0.00000000" },
+        swxbtc: { balance: "0", decimals: 8, formatted: "0.00000000" },
+      };
+    }
+  },
+
+  /**
    * Get the swap contract's token balances
    */
   async getSwapContractBalance(): Promise<ContractBalance> {
     return this.getAddressBalances(SWAP_CONTRACT_ID);
-  },
-
-  /**
-   * Get user balances for both tokens
-   */
-  async getUserBalances(address: string): Promise<ContractBalance> {
-    return this.getAddressBalances(address);
   },
 
   /**
@@ -124,7 +174,6 @@ export const stacksApiService = {
         return status;
       }
 
-      // Wait 5 seconds between checks
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
@@ -160,9 +209,6 @@ export const stacksApiService = {
   },
 };
 
-/**
- * Format balance with decimals
- */
 function formatBalance(balance: string, decimals: number): string {
   const num = BigInt(balance);
   const divisor = BigInt(10 ** decimals);

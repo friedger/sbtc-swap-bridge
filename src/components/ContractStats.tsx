@@ -1,61 +1,25 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ContractBalance, TotalSupply } from '@/services/stacksApiService';
+import { ContractBalance, UserBalances } from '@/services/stacksApiService';
 import { SbtcLogo } from '@/components/icons/SbtcLogo';
+import { BitcoinLogo } from '@/components/icons/BitcoinLogo';
 import { EXPLORER_CONTRACT_URL } from '@/lib/constants';
 import { ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 interface ContractStatsProps {
   contractBalances: ContractBalance | null;
-  xbtcTotalSupply: TotalSupply | null;
+  userBalances: UserBalances | null;
+  isConnected: boolean;
   isLoading: boolean;
 }
 
-function calculateLiquidSupply(totalSupply: string | undefined, contractXbtcBalance: string | undefined): bigint {
-  if (!totalSupply) return BigInt(0);
-  const supply = BigInt(totalSupply);
-  const contractXbtc = contractXbtcBalance ? BigInt(contractXbtcBalance) : BigInt(0);
-  return supply - contractXbtc;
-}
-
-function calculatePercentage(sbtcBalance: string | undefined, liquidSupply: bigint): number {
-  if (!sbtcBalance || liquidSupply === BigInt(0)) return 0;
-  const sbtc = BigInt(sbtcBalance);
-  // Calculate percentage with 4 decimal precision
-  const percentage = Number((sbtc * BigInt(10000) / liquidSupply)) / 100;
-  return percentage;
-}
-
-function formatPercentage(percentage: number): string {
-  return percentage.toFixed(2);
-}
-
-function formatBigIntBalance(value: bigint, decimals: number = 8): string {
-  const divisor = BigInt(10 ** decimals);
-  const whole = value / divisor;
-  const fraction = value % divisor;
-  return `${whole}.${fraction.toString().padStart(decimals, '0')}`;
-}
-
-export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: ContractStatsProps) {
-  const liquidSupply = calculateLiquidSupply(
-    xbtcTotalSupply?.totalSupply,
-    contractBalances?.xbtc.balance
-  );
-  const percentage = calculatePercentage(
-    contractBalances?.sbtc.balance,
-    liquidSupply
-  );
-  const liquidSupplyFormatted = formatBigIntBalance(liquidSupply);
-  const isOverCoverage = percentage > 100;
-
+export function ContractStats({ contractBalances, userBalances, isConnected, isLoading }: ContractStatsProps) {
   return (
     <Card className="w-full max-w-md border-border/50 bg-card/80 backdrop-blur">
       <CardHeader className="pb-4">
-        <CardTitle className="text-lg">Contract Liquidity</CardTitle>
+        <CardTitle className="text-lg">Balances</CardTitle>
         <CardDescription>
-          Available tokens in the swap contract{' '}
+          Contract &amp; wallet balances{' '}
           <a 
             href={EXPLORER_CONTRACT_URL} 
             target="_blank" 
@@ -67,58 +31,81 @@ export function ContractStats({ contractBalances, xbtcTotalSupply, isLoading }: 
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* sBTC Balance */}
-        <div className="flex items-center justify-between rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <div className="flex items-center gap-3">
-            <SbtcLogo className="h-8 w-8" />
-            <div>
-              <p className="font-medium text-primary">sBTC</p>
-              <p className="text-xs text-muted-foreground">Stacks Bitcoin</p>
-            </div>
+        {/* Contract Balances */}
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Contract</p>
+          <div className="space-y-2">
+            <BalanceRow
+              icon={<BitcoinLogo className="h-5 w-5 grayscale opacity-60" />}
+              label="xBTC"
+              value={contractBalances?.xbtc.formatted || '0.00000000'}
+              isLoading={isLoading}
+            />
+            <BalanceRow
+              icon={<SbtcLogo className="h-5 w-5" />}
+              label="sBTC"
+              value={contractBalances?.sbtc.formatted || '0.00000000'}
+              isLoading={isLoading}
+              highlight
+            />
           </div>
-          {isLoading ? (
-            <Skeleton className="h-6 w-24" />
-          ) : (
-            <span className="font-mono text-lg text-primary">
-              {contractBalances?.sbtc.formatted || '0.00000000'}
-            </span>
-          )}
         </div>
 
-        {/* Coverage Percentage */}
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              <span className="text-primary">sBTC</span> Coverage of Liquid <span className="text-muted-foreground/70">xBTC</span> Supply
-            </p>
-            {isLoading ? (
-              <Skeleton className="h-5 w-16" />
-            ) : (
-              <span className={`font-mono font-medium ${isOverCoverage ? 'text-green-500' : 'text-primary'}`}>
-                {isOverCoverage ? (
-                  <Link to="/manage" className="hover:underline flex items-center gap-1">
-                    {formatPercentage(percentage)}%
-                    <ExternalLink className="h-3 w-3" />
-                  </Link>
-                ) : (
-                  `${formatPercentage(percentage)}%`
-                )}
-              </span>
-            )}
+        {/* User Balances */}
+        {isConnected && (
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Your Wallet</p>
+            <div className="space-y-2">
+              <BalanceRow
+                icon={<BitcoinLogo className="h-5 w-5 grayscale opacity-60" />}
+                label="xBTC"
+                value={userBalances?.xbtc.formatted || '0.00000000'}
+                isLoading={isLoading}
+              />
+              <BalanceRow
+                icon={<SbtcLogo className="h-5 w-5" />}
+                label="sBTC"
+                value={userBalances?.sbtc.formatted || '0.00000000'}
+                isLoading={isLoading}
+                highlight
+              />
+              <BalanceRow
+                icon={<BitcoinLogo className="h-5 w-5 grayscale opacity-40" />}
+                label="swxBTC"
+                sublabel="swap receipt"
+                value={userBalances?.swxbtc.formatted || '0.00000000'}
+                isLoading={isLoading}
+              />
+            </div>
           </div>
-          <div className="mt-2 space-y-1">
-            <p className="text-xs text-muted-foreground">
-              Total xBTC supply: {xbtcTotalSupply?.formatted || '0.00000000'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Contract xBTC balance: {contractBalances?.xbtc.formatted || '0.00000000'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Liquid xBTC supply: {liquidSupplyFormatted}
-            </p>
-          </div>
-        </div>
+        )}
       </CardContent>
     </Card>
+  );
+}
+
+function BalanceRow({ icon, label, sublabel, value, isLoading, highlight }: {
+  icon: React.ReactNode;
+  label: string;
+  sublabel?: string;
+  value: string;
+  isLoading: boolean;
+  highlight?: boolean;
+}) {
+  return (
+    <div className={`flex items-center justify-between rounded-lg border p-2.5 ${highlight ? 'border-primary/30 bg-primary/5' : 'border-border/50 bg-background/50'}`}>
+      <div className="flex items-center gap-2">
+        {icon}
+        <div>
+          <span className={`text-sm font-medium ${highlight ? 'text-primary' : 'text-foreground'}`}>{label}</span>
+          {sublabel && <p className="text-[10px] text-muted-foreground">{sublabel}</p>}
+        </div>
+      </div>
+      {isLoading ? (
+        <Skeleton className="h-5 w-20" />
+      ) : (
+        <span className={`font-mono text-sm ${highlight ? 'text-primary' : ''}`}>{value}</span>
+      )}
+    </div>
   );
 }

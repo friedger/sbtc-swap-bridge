@@ -1,13 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { walletService, WalletState } from '@/services/walletService';
-import { stacksApiService, ContractBalance, TotalSupply } from '@/services/stacksApiService';
+import { stacksApiService, ContractBalance, UserBalances } from '@/services/stacksApiService';
 import { transactionWebSocketService, TxStatus } from '@/services/transactionWebSocketService';
 
 interface UseWalletReturn {
   wallet: WalletState;
-  userBalances: ContractBalance | null;
+  userBalances: UserBalances | null;
   contractBalances: ContractBalance | null;
-  xbtcTotalSupply: TotalSupply | null;
   isLoading: boolean;
   isSwapping: boolean;
   txStatus: TxStatus | null;
@@ -15,7 +14,9 @@ interface UseWalletReturn {
   isDialogOpen: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
-  swap: () => Promise<void>;
+  depositXbtc: () => Promise<void>;
+  claimSbtc: () => Promise<void>;
+  withdrawXbtc: () => Promise<void>;
   refreshBalances: () => Promise<void>;
   closeDialog: () => void;
 }
@@ -26,16 +27,14 @@ export function useWallet(): UseWalletReturn {
     stxAddress: null,
     btcAddress: null,
   });
-  const [userBalances, setUserBalances] = useState<ContractBalance | null>(null);
+  const [userBalances, setUserBalances] = useState<UserBalances | null>(null);
   const [contractBalances, setContractBalances] = useState<ContractBalance | null>(null);
-  const [xbtcTotalSupply, setXbtcTotalSupply] = useState<TotalSupply | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [txStatus, setTxStatus] = useState<TxStatus | null>(null);
   const [txid, setTxid] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Load stored wallet on mount
   useEffect(() => {
     const stored = walletService.getStoredWallet();
     if (stored.isConnected) {
@@ -43,26 +42,20 @@ export function useWallet(): UseWalletReturn {
     }
   }, []);
 
-  // Fetch balances when wallet connects
   useEffect(() => {
     if (wallet.stxAddress) {
       refreshBalances();
     }
   }, [wallet.stxAddress]);
 
-  // Fetch contract balances and xBTC total supply on mount
   useEffect(() => {
-    fetchContractBalancesAndSupply();
+    fetchContractBalances();
   }, []);
 
-  const fetchContractBalancesAndSupply = async () => {
+  const fetchContractBalances = async () => {
     try {
-      const [balances, supply] = await Promise.all([
-        stacksApiService.getSwapContractBalance(),
-        stacksApiService.getXbtcTotalSupply(),
-      ]);
+      const balances = await stacksApiService.getSwapContractBalance();
       setContractBalances(balances);
-      setXbtcTotalSupply(supply);
     } catch (error) {
       console.error('Failed to fetch contract balances:', error);
     }
@@ -100,63 +93,70 @@ export function useWallet(): UseWalletReturn {
 
   const disconnect = () => {
     walletService.disconnect();
-    setWallet({
-      isConnected: false,
-      stxAddress: null,
-      btcAddress: null,
-    });
+    setWallet({ isConnected: false, stxAddress: null, btcAddress: null });
     setUserBalances(null);
   };
 
   const closeDialog = () => {
     setIsDialogOpen(false);
-    // Reset tx state after closing
     if (txStatus === 'success' || txStatus === 'failed') {
       setTxStatus(null);
       setTxid(null);
     }
   };
 
-  const swap = async () => {
-    if (!wallet.stxAddress || !userBalances || !contractBalances) return;
-    
-    const userXbtc = BigInt(userBalances.xbtc.balance);
-    const contractSbtc = BigInt(contractBalances.sbtc.balance);
-    const swapAmount = userXbtc < contractSbtc ? userXbtc : contractSbtc;
-    
-    if (swapAmount <= 0n) return;
-    
+  const handleTx = async (txCall: () => Promise<{ txid: string }>) => {
     setIsSwapping(true);
     setTxStatus('pending');
     setIsDialogOpen(true);
     
     try {
-      const { txid: newTxid } = await walletService.depositXbtc(Number(swapAmount), wallet.stxAddress);
+      const { txid: newTxid } = await txCall();
       setTxid(newTxid);
       
-      // Subscribe to transaction updates via WebSocket
-      transactionWebSocketService.subscribeToTransaction(newTxid, (status, data) => {
+      transactionWebSocketService.subscribeToTransaction(newTxid, (status) => {
         setTxStatus(status);
-        
-        if (status === 'success') {
+        if (status === 'success' || status === 'failed') {
           setIsSwapping(false);
-          refreshBalances();
-        } else if (status === 'failed') {
-          setIsSwapping(false);
+          if (status === 'success') refreshBalances();
         }
       });
     } catch (error) {
-      console.error('Swap failed:', error);
+      console.error('Transaction failed:', error);
       setTxStatus('failed');
       setIsSwapping(false);
     }
+  };
+
+  const depositXbtc = async () => {
+    if (!wallet.stxAddress || !userBalances) return;
+    const amount = Number(BigInt(userBalances.xbtc.balance));
+    if (amount <= 0) return;
+    await handleTx(() => walletService.depositXbtc(amount, wallet.stxAddress!));
+  };
+
+  const claimSbtc = async () => {
+    if (!wallet.stxAddress || !userBalances || !contractBalances) return;
+    const userSwxbtc = BigInt(userBalances.swxbtc.balance);
+    const contractSbtc = BigInt(contractBalances.sbtc.balance);
+    const amount = Number(userSwxbtc < contractSbtc ? userSwxbtc : contractSbtc);
+    if (amount <= 0) return;
+    await handleTx(() => walletService.claimSbtc(amount, wallet.stxAddress!));
+  };
+
+  const withdrawXbtc = async () => {
+    if (!wallet.stxAddress || !userBalances || !contractBalances) return;
+    const userSwxbtc = BigInt(userBalances.swxbtc.balance);
+    const contractXbtc = BigInt(contractBalances.xbtc.balance);
+    const amount = Number(userSwxbtc < contractXbtc ? userSwxbtc : contractXbtc);
+    if (amount <= 0) return;
+    await handleTx(() => walletService.withdrawXbtc(amount, wallet.stxAddress!));
   };
 
   return {
     wallet,
     userBalances,
     contractBalances,
-    xbtcTotalSupply,
     isLoading,
     isSwapping,
     txStatus,
@@ -164,7 +164,9 @@ export function useWallet(): UseWalletReturn {
     isDialogOpen,
     connect,
     disconnect,
-    swap,
+    depositXbtc,
+    claimSbtc,
+    withdrawXbtc,
     refreshBalances,
     closeDialog,
   };
