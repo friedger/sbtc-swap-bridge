@@ -131,7 +131,7 @@ export function useWallet(): UseWalletReturn {
     setIsDialogOpen(true);
     
     try {
-      const { txid: newTxid } = await walletService.swap(Number(swapAmount), wallet.stxAddress);
+      const { txid: newTxid } = await walletService.depositXbtc(Number(swapAmount), wallet.stxAddress);
       setTxid(newTxid);
       
       // Subscribe to transaction updates via WebSocket

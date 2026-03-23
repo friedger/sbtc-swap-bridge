@@ -1,29 +1,37 @@
 // Contract addresses and names
-export const XBTC_CONTRACT_ADDRESS = 'SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR';
-export const XBTC_CONTRACT_NAME = 'Wrapped-Bitcoin';
-export const XBTC_ASSET_NAME = 'wrapped-bitcoin';
+export const XBTC_CONTRACT_ADDRESS =
+  "SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR";
+export const XBTC_CONTRACT_NAME = "Wrapped-Bitcoin";
+export const XBTC_ASSET_NAME = "wrapped-bitcoin";
 
-export const SBTC_CONTRACT_ADDRESS = 'SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4';
-export const SBTC_CONTRACT_NAME = 'sbtc-token';
-export const SBTC_ASSET_NAME = 'sbtc-token';
+export const SBTC_CONTRACT_ADDRESS =
+  "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4";
+export const SBTC_CONTRACT_NAME = "sbtc-token";
+export const SBTC_ASSET_NAME = "sbtc-token";
 
-export const SWAP_CONTRACT_ADDRESS = 'SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9';
-export const SWAP_CONTRACT_NAME = 'xbtc-sbtc-swap-v2';
+export const SWXBTC_CONTRACT_ADDRESS =
+  "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9";
+export const SWXBTC_CONTRACT_NAME = "swapping-xbtc-v3";
+export const SWXBTC_ASSET_NAME = "swapping-xbtc";
+
+export const SWAP_CONTRACT_ADDRESS =
+  "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9";
+export const SWAP_CONTRACT_NAME = "xbtc-sbtc-swap-v3";
 
 // Full contract identifiers
 export const SWAP_CONTRACT_ID = `${SWAP_CONTRACT_ADDRESS}.${SWAP_CONTRACT_NAME}`;
 export const XBTC_CONTRACT_ID = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}`;
 export const SBTC_CONTRACT_ID = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}`;
-
+export const SWXBTC_CONTRACT_ID = `${SWXBTC_CONTRACT_ADDRESS}.${SWXBTC_CONTRACT_NAME}`;
 // API URLs
-export const STACKS_API_URL = 'https://api.mainnet.hiro.so';
-export const STACKS_WS_URL = 'wss://api.mainnet.hiro.so';
+export const STACKS_API_URL = "https://api.mainnet.hiro.so";
+export const STACKS_WS_URL = "wss://api.mainnet.hiro.so";
 
 // External links
 export const EXPLORER_CONTRACT_URL = `https://explorer.hiro.so/txid/${SWAP_CONTRACT_ID}?chain=mainnet`;
-export const EXPLORER_TX_BASE_URL = 'https://explorer.hiro.so/txid';
-export const GITHUB_REPO_URL = 'https://github.com/friedger/sbtc-swap-bridge';
-export const FAST_POOL_URL = 'https://fastpool.org/members';
+export const EXPLORER_TX_BASE_URL = "https://explorer.hiro.so/txid";
+export const GITHUB_REPO_URL = "https://github.com/friedger/sbtc-swap-bridge";
+export const FAST_POOL_URL = "https://fastpool.org/members";
 
 // Network
-export const NETWORK = 'mainnet';
+export const NETWORK = "mainnet";
