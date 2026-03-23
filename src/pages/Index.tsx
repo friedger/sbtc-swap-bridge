@@ -96,7 +96,7 @@ const Index = () => {
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                   3
                 </div>
-                <p>Claim your sBTC (or withdraw xBTC)</p>
+                <p>Claim your sBTC</p>
               </div>
             </div>
           </div>

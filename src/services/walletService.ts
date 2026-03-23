@@ -1,14 +1,15 @@
 import {
-  CUSTODIAN_ADDRESS,
   DUAL_STACKING_CONTRACT_ID,
   NETWORK,
   SBTC_ASSET_NAME,
   SBTC_CONTRACT_ID,
+  SWAP_CONTRACT_ADDRESS,
   SWAP_CONTRACT_ID,
+  SWAP_CONTRACT_NAME,
   SWXBTC_ASSET_NAME,
   SWXBTC_CONTRACT_ID,
   XBTC_ASSET_NAME,
-  XBTC_CONTRACT_ID,
+  XBTC_CONTRACT_ID
 } from "@/lib/constants";
 import {
   connect,
@@ -17,8 +18,12 @@ import {
   isConnected,
   request,
 } from "@stacks/connect";
-import { Cl, Pc } from "@stacks/transactions";
-
+import {
+  Cl,
+  fetchCallReadOnlyFunction,
+  Pc,
+  UIntCV
+} from "@stacks/transactions";
 export interface WalletState {
   isConnected: boolean;
   stxAddress: string | null;
@@ -75,7 +80,10 @@ export const walletService = {
   /**
    * Step 1: Deposit xBTC into the swap contract. User receives swxBTC receipt token.
    */
-  async depositXbtc(amount: number, userAddress: string): Promise<{ txid: string }> {
+  async depositXbtc(
+    amount: number,
+    userAddress: string,
+  ): Promise<{ txid: string }> {
     try {
       const userSendsXbtc = Pc.principal(userAddress)
         .willSendEq(amount)
@@ -100,7 +108,10 @@ export const walletService = {
   /**
    * Step 2: Claim sBTC by burning swxBTC receipt token.
    */
-  async claimSbtc(amount: number, userAddress: string): Promise<{ txid: string }> {
+  async claimSbtc(
+    amount: number,
+    userAddress: string,
+  ): Promise<{ txid: string }> {
     try {
       const contractSendsSbtc = Pc.principal(SWAP_CONTRACT_ID)
         .willSendGte(amount)
@@ -128,7 +139,10 @@ export const walletService = {
   /**
    * Withdraw xBTC (cancel swap) by burning swxBTC receipt token.
    */
-  async withdrawXbtc(amount: number, userAddress: string): Promise<{ txid: string }> {
+  async withdrawXbtc(
+    amount: number,
+    userAddress: string,
+  ): Promise<{ txid: string }> {
     try {
       const contractSendsXbtc = Pc.principal(SWAP_CONTRACT_ID)
         .willSendEq(amount)
@@ -181,10 +195,7 @@ export const walletService = {
       const response = await request("stx_callContract", {
         contract: SWAP_CONTRACT_ID,
         functionName: "enroll",
-        functionArgs: [
-          Cl.principal(DUAL_STACKING_CONTRACT_ID),
-          Cl.none(),
-        ],
+        functionArgs: [Cl.principal(DUAL_STACKING_CONTRACT_ID), Cl.none()],
         network: NETWORK,
       } as any);
 
@@ -200,25 +211,43 @@ export const walletService = {
    */
   async withdrawExcessSbtc(): Promise<{ txid: string }> {
     try {
+      //
+      const contractSbtcBalance = (await fetchCallReadOnlyFunction({
+        contractAddress: SWAP_CONTRACT_ADDRESS,
+        contractName: SWAP_CONTRACT_NAME,
+        functionName: "get-sbtc-balance",
+        functionArgs: [Cl.principal(SWAP_CONTRACT_ID)],
+        network: NETWORK,
+        senderAddress: SWAP_CONTRACT_ID,
+      })) as UIntCV;
+
+      const contractSxbtcBalance = (await fetchCallReadOnlyFunction({
+        contractAddress: SWAP_CONTRACT_ADDRESS,
+        contractName: SWAP_CONTRACT_NAME,
+        functionName: "get-swapping-xbtc-supply",
+        functionArgs: [],
+        network: NETWORK,
+        senderAddress: SWAP_CONTRACT_ID,
+      })) as UIntCV;
+
+      const amount =
+        BigInt(contractSbtcBalance.value) - BigInt(contractSxbtcBalance.value);
+      const contractSendsSbtc = Pc.principal(SWAP_CONTRACT_ID)
+        .willSendEq(amount)
+        .ft(SBTC_CONTRACT_ID, SBTC_ASSET_NAME);
       const response = await request("stx_callContract", {
         contract: SWAP_CONTRACT_ID,
         functionName: "withdraw-excess-sbtc",
         functionArgs: [],
+        postConditionMode: "deny",
+        postConditions: [contractSendsSbtc],
         network: NETWORK,
-      } as any);
+      });
 
       return { txid: response.txid };
     } catch (error) {
       console.error("Withdraw excess sBTC failed:", error);
       throw error;
     }
-  },
-
-  getSwapContractAddress(): string {
-    return SWAP_CONTRACT_ID;
-  },
-
-  getCustodianAddress(): string {
-    return CUSTODIAN_ADDRESS;
   },
 };
