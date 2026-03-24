@@ -31,6 +31,7 @@ export function SwapCard({
   onClaim,
   onWithdraw,
   onRefresh,
+  onConnect,
   isLoading,
 }: SwapCardProps) {
   const userXbtc = userBalances ? BigInt(userBalances.xbtc.balance) : 0n;
