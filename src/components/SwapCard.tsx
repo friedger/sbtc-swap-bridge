@@ -108,8 +108,8 @@ export function SwapCard({
 
         {/* Step 2: Claim sBTC */}
         <div className={`rounded-lg border p-4 ${hasSwxbtc ? 'border-primary/50 bg-primary/5' : 'border-border bg-background/50 opacity-60'}`}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${hasSwxbtc ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>2</div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${hasSwxbtc ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>Step 2</span>
             <span className="text-sm font-medium">Claim sBTC</span>
           </div>
           <div className="flex items-center justify-between mb-3">
