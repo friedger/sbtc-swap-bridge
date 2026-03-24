@@ -4,6 +4,13 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
+# AI agent instructions
+User-agent: *
+Allow: /AGENT.md
+
+# Agent metadata
+X-Robots-Tag: /AGENT.md
+
 User-agent: Twitterbot
 Allow: /
 
