@@ -17,6 +17,7 @@ interface SwapCardProps {
   onClaim: () => void;
   onWithdraw: () => void;
   onRefresh: () => void;
+  onConnect: () => void;
   isLoading: boolean;
 }
 
