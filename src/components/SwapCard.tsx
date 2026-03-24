@@ -66,8 +66,8 @@ export function SwapCard({
       <CardContent className="space-y-4">
         {/* Step 1: Deposit xBTC */}
         <div className={`rounded-lg border p-4 ${!hasSwxbtc ? 'border-primary/50 bg-primary/5' : 'border-border bg-background/50 opacity-60'}`}>
-          <div className="flex items-center gap-2 mb-2">
-            <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${!hasSwxbtc ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>1</div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold ${!hasSwxbtc ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>Step 1</span>
             <span className="text-sm font-medium">Deposit xBTC</span>
           </div>
           <div className="flex items-center justify-between mb-3">
@@ -77,18 +77,24 @@ export function SwapCard({
             </div>
             <span className="font-mono text-sm">{isConnected ? userBalances?.xbtc.formatted || '0.00000000' : '—'}</span>
           </div>
-          <Button
-            className="w-full"
-            size="sm"
-            onClick={onDeposit}
-            disabled={!isConnected || !canDeposit || isSwapping}
-          >
-            {isSwapping && !hasSwxbtc ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Depositing...</>
-            ) : !isConnected ? 'Connect Wallet' : !canDeposit ? 'No xBTC' : (
-              `Deposit ${fmt(userXbtc)} xBTC`
-            )}
-          </Button>
+          {!isConnected ? (
+            <Button className="w-full" size="sm" onClick={onConnect}>
+              Connect Wallet
+            </Button>
+          ) : (
+            <Button
+              className="w-full"
+              size="sm"
+              onClick={onDeposit}
+              disabled={!canDeposit || isSwapping}
+            >
+              {isSwapping && !hasSwxbtc ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Depositing...</>
+              ) : !canDeposit ? 'No xBTC' : (
+                `Deposit ${fmt(userXbtc)} xBTC`
+              )}
+            </Button>
+          )}
         </div>
 
         {/* Arrow */}
