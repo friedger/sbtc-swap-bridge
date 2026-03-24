@@ -70,6 +70,7 @@ const Index = () => {
             onClaim={claimSbtc}
             onWithdraw={withdrawXbtc}
             onRefresh={refreshBalances}
+            onConnect={connect}
             isLoading={isLoading}
           />
 
