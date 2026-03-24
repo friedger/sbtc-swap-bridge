@@ -78,8 +78,8 @@ export function SwapCard({
             <span className="font-mono text-sm">{isConnected ? userBalances?.xbtc.formatted || '0.00000000' : '—'}</span>
           </div>
           {!isConnected ? (
-            <Button className="w-full" size="sm" onClick={onConnect}>
-              Connect Wallet
+            <Button className="w-full" size="sm" onClick={onConnect} disabled={isLoading}>
+              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Connecting...</> : 'Connect Wallet'}
             </Button>
           ) : (
             <Button
