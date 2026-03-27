@@ -1,5 +1,6 @@
 import { connectWebSocketClient } from '@stacks/blockchain-api-client';
-import { STACKS_API_URL, STACKS_WS_URL } from '@/lib/constants';
+import { STACKS_WS_URL } from '@/lib/constants';
+import { stacksApiService } from './stacksApiService';
 
 export type TxStatus = 'pending' | 'submitted' | 'in_mempool' | 'success' | 'failed';
 
@@ -61,10 +62,9 @@ class TransactionWebSocketService {
     // Poll every 10 seconds
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`${STACKS_API_URL}/extended/v1/tx/${normalizedTxid}`);
-        if (!response.ok) return; // tx not yet indexed
+        const data = await stacksApiService.getTransaction(normalizedTxid);
+        if (!data) return; // tx not yet indexed
 
-        const data = await response.json();
         const cb = this.callbacks.get(txid);
         if (!cb) {
           clearInterval(interval);

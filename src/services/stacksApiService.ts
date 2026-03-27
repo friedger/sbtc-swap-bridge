@@ -142,16 +142,23 @@ export const stacksApiService = {
   },
 
   /**
+   * Get transaction by txid
+   */
+  async getTransaction(txid: string) {
+    const { data } = await client.GET("/extended/v1/tx/{tx_id}", {
+      params: {
+        path: { tx_id: txid },
+      },
+    });
+    return data;
+  },
+
+  /**
    * Get transaction status
    */
   async getTransactionStatus(txid: string): Promise<string> {
     try {
-      const { data } = await client.GET("/extended/v1/tx/{tx_id}", {
-        params: {
-          path: { tx_id: txid },
-        },
-      });
-
+      const data = await this.getTransaction(txid);
       return data?.tx_status || "pending";
     } catch (error) {
       console.error("Failed to fetch transaction status:", error);
