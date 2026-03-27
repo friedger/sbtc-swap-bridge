@@ -6,7 +6,7 @@ This file describes how an AI agent can autonomously perform the xBTC → sBTC s
 
 ## Overview
 
-The swap converts **xBTC** (Wrapped Bitcoin, a SIP-010 fungible token) into **sBTC** (wrapped Bitcoin, a SIP-010 fungible token on Stacks) via a two-step on-chain process through the `xbtc-sbtc-swap-v3` contract.
+The swap converts **xBTC** (Wrapped Bitcoin, a SIP-010 fungible token) into **sBTC** (wrapped Bitcoin, a SIP-010 fungible token on Stacks) via a two-step on-chain process through the `xbtc-sbtc-swap-v4` contract.
 
 ---
 
@@ -21,10 +21,10 @@ The swap converts **xBTC** (Wrapped Bitcoin, a SIP-010 fungible token) into **sB
 
 | Token / Contract   | Contract ID                                                             |
 |--------------------|-------------------------------------------------------------------------|
-| Swap contract      | `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap-v3`         |
+| Swap contract      | `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap-v4`         |
 | xBTC token         | `SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin`            |
 | sBTC token         | `SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token`                |
-| swxBTC (receipt)   | `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.swapping-xbtc-v3`          |
+| swxBTC (receipt)   | `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.swapping-xbtc-v4`          |
 
 ---
 
@@ -44,7 +44,7 @@ Before submitting any transaction, verify the following via read-only contract c
 | Check | How | Required condition |
 |---|---|---|
 | User xBTC balance | `GET https://api.mainnet.hiro.so/extended/v1/address/{userAddress}/balances` → `fungible_tokens["SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin::wrapped-bitcoin"].balance` | Must be > 0 to proceed with Step 1 |
-| User swxBTC balance | Same endpoint → `fungible_tokens["SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.swapping-xbtc-v3::swapping-xbtc"].balance` | Must be > 0 to proceed with Step 2 |
+| User swxBTC balance | Same endpoint → `fungible_tokens["SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.swapping-xbtc-v4::swapping-xbtc"].balance` | Must be > 0 to proceed with Step 2 |
 | Contract sBTC balance | Same endpoint for contract address `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9` → `fungible_tokens["SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token"].balance` | Must be ≥ user swxBTC balance for Step 2 to succeed |
 
 ---
@@ -54,7 +54,7 @@ Before submitting any transaction, verify the following via read-only contract c
 **Goal:** Send the user's xBTC to the swap contract. The contract mints an equal amount of swxBTC to the user as a receipt.
 
 **Contract call:**
-- **Contract:** `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap-v3`
+- **Contract:** `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap-v4`
 - **Function:** `deposit-xbtc`
 - **Arguments:** `[uint amount]` — amount in satoshis
 - **Post-condition (deny mode):** The user's address sends exactly `amount` of `SP3DX3H4FEYZJZ586MFBS25ZW3HZDMEW92260R2PR.Wrapped-Bitcoin::wrapped-bitcoin`
@@ -68,12 +68,12 @@ Before submitting any transaction, verify the following via read-only contract c
 **Goal:** Burn the user's swxBTC receipt tokens. The contract sends an equal amount of sBTC to the user.
 
 **Contract call:**
-- **Contract:** `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap-v3`
+- **Contract:** `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.xbtc-sbtc-swap-v4`
 - **Function:** `claim-sbtc`
 - **Arguments:** none
 - **Post-conditions (deny mode):**
   1. The swap contract sends ≥ `amount` of `SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token::sbtc-token`
-  2. The user sends ≤ `amount` of `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.swapping-xbtc-v3::swapping-xbtc`
+  2. The user sends ≤ `amount` of `SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9.swapping-xbtc-v4::swapping-xbtc`
 
 **After submission:** Verify completion by checking the user's sBTC balance has increased.
 

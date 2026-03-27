@@ -11,12 +11,12 @@ export const SBTC_ASSET_NAME = "sbtc-token";
 
 export const SWXBTC_CONTRACT_ADDRESS =
   "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9";
-export const SWXBTC_CONTRACT_NAME = "swapping-xbtc-v3";
+export const SWXBTC_CONTRACT_NAME = "swapping-xbtc-v4";
 export const SWXBTC_ASSET_NAME = "swapping-xbtc";
 
 export const SWAP_CONTRACT_ADDRESS =
   "SP2PABAF9FTAJYNFZH93XENAJ8FVY99RRM50D2JG9";
-export const SWAP_CONTRACT_NAME = "xbtc-sbtc-swap-v3";
+export const SWAP_CONTRACT_NAME = "xbtc-sbtc-swap-v4";
 
 export const DUAL_STACKING_CONTRACT_ID = 'SP1HFCRKEJ8BYW4D0E3FAWHFDX8A25PPAA83HWWZ9.dual-stacking-v2_0_4';
 
