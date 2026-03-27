@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { useTheme } from "@/hooks/useTheme";
 import { useWallet } from "@/hooks/useWallet";
-import { CUSTODIAN_ADDRESS } from "@/lib/constants";
+import { CUSTODIAN_ADDRESS, DEPLOYER_ADDRESS } from "@/lib/constants";
 import { walletService } from "@/services/walletService";
 import {
   AlertTriangle,
@@ -32,6 +32,7 @@ export default function Custodian() {
   const [isEnrolling, setIsEnrolling] = useState(false);
 
   const isCustodian = wallet.stxAddress === CUSTODIAN_ADDRESS;
+  const isDeployer = wallet.stxAddress === DEPLOYER_ADDRESS;
   const contractXbtc = contractBalances
     ? BigInt(contractBalances.xbtc.balance)
     : 0n;
@@ -76,7 +77,7 @@ export default function Custodian() {
   };
 
   const handleEnroll = async () => {
-    if (!wallet.isConnected) return;
+    if (!wallet.isConnected || !isDeployer) return;
 
     setIsEnrolling(true);
     try {
@@ -109,21 +110,11 @@ export default function Custodian() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Custodian Panel</h1>
+            <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
             <p className="text-muted-foreground">
-              Manage the swap contract as custodian
+              Manage the swap contract as custodian or deployer.
             </p>
           </div>
-
-          {wallet.isConnected && !isCustodian && (
-            <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <p>
-                Your wallet is not the custodian. Only the custodian can call
-                init-unwrap.
-              </p>
-            </div>
-          )}
 
           {/* Contract balances summary */}
           <Card className="border-border/50 bg-card/80 backdrop-blur">
@@ -161,6 +152,16 @@ export default function Custodian() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {wallet.isConnected && !isCustodian && (
+                <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive my-4">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <p>
+                    Your wallet is not the custodian. Only the custodian can
+                    call init-unwrap.
+                  </p>
+                </div>
+              )}
+
               <Button
                 onClick={handleInitUnwrap}
                 disabled={
@@ -197,9 +198,18 @@ export default function Custodian() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {wallet.isConnected && !isDeployer && (
+                <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive my-4">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <p>
+                    Your wallet is not the deployer. Only the deployer can
+                    enroll the contract for dual stacking rewards.
+                  </p>
+                </div>
+              )}
               <Button
                 onClick={handleEnroll}
-                disabled={isEnrolling || !wallet.isConnected}
+                disabled={isEnrolling || !wallet.isConnected || !isDeployer}
                 variant="secondary"
                 className="w-full"
               >
