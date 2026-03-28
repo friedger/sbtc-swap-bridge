@@ -114,37 +114,29 @@ export function SupplyBreakdown({
         </div>
 
         {/* Legend */}
-        <div className="grid grid-cols-1 gap-2 text-xs">
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <BitcoinLogo className="h-3.5 w-3.5 shrink-0 grayscale opacity-60" />
-              <span className="text-muted-foreground whitespace-nowrap">xBTC in contract:</span>
-            </div>
-            <span className="font-mono shrink-0">{contractBalances.xbtc.formatted}</span>
+        <div className="grid grid-cols-1 gap-1.5 text-xs">
+          <div className="flex items-center gap-1.5">
+            <BitcoinLogo className="h-3.5 w-3.5 shrink-0 grayscale opacity-60" />
+            <span className="text-muted-foreground">xBTC:</span>
+            <span className="font-mono ml-auto">{contractBalances.xbtc.formatted}</span>
           </div>
-          <div className="flex items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <SbtcLogo className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-muted-foreground whitespace-nowrap">sBTC in contract:</span>
-            </div>
-            <span className="font-mono shrink-0">{contractBalances.sbtc.formatted}</span>
+          <div className="flex items-center gap-1.5">
+            <SbtcLogo className="h-3.5 w-3.5 shrink-0" />
+            <span className="text-muted-foreground">sBTC:</span>
+            <span className="font-mono ml-auto">{contractBalances.sbtc.formatted}</span>
           </div>
           {inUnwrapping > 0n && (
-            <div className="flex items-center justify-between gap-1.5">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className="h-3.5 w-3.5 shrink-0 rounded-sm bg-primary/20 border border-dashed border-primary/40" />
-                <span className="text-muted-foreground whitespace-nowrap">In unwrapping:</span>
-              </div>
-              <span className="font-mono shrink-0">{fmt(inUnwrapping)}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="h-3.5 w-3.5 shrink-0 rounded-sm bg-primary/20 border border-dashed border-primary/40" />
+              <span className="text-muted-foreground">Unwrapping:</span>
+              <span className="font-mono ml-auto">{fmt(inUnwrapping)}</span>
             </div>
           )}
           {excessSbtc > 0n && (
-            <div className="flex items-center justify-between gap-1.5">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className="h-3.5 w-3.5 shrink-0 rounded-sm" style={{ backgroundColor: "#FF5512", opacity: 0.5 }} />
-                <span className="text-muted-foreground whitespace-nowrap">Excess sBTC:</span>
-              </div>
-              <span className="font-mono shrink-0">{fmt(excessSbtc)}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="h-3.5 w-3.5 shrink-0 rounded-sm" style={{ backgroundColor: "#FF5512", opacity: 0.5 }} />
+              <span className="text-muted-foreground">Excess sBTC:</span>
+              <span className="font-mono ml-auto">{fmt(excessSbtc)}</span>
             </div>
           )}
         </div>
