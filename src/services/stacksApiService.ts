@@ -3,7 +3,9 @@ import {
   SBTC_CONTRACT_ADDRESS,
   SBTC_CONTRACT_NAME,
   STACKS_API_URL,
+  SWAP_CONTRACT_ADDRESS,
   SWAP_CONTRACT_ID,
+  SWAP_CONTRACT_NAME,
   SWXBTC_CONTRACT_ADDRESS,
   SWXBTC_CONTRACT_NAME,
   XBTC_CONTRACT_ADDRESS,
@@ -41,6 +43,41 @@ export interface ContractBalance {
 export interface TotalSupply {
   totalSupply: string;
   formatted: string;
+}
+
+export interface ContractCallTx {
+  tx_id: string;
+  sender_address: string;
+  contract_call: {
+    contract_id: string;
+    function_name: string;
+    function_args: Array<{ repr: string; name: string; type: string }>;
+  };
+  tx_status: string;
+  burn_block_time_iso: string;
+  block_height: number;
+  events?: Array<{
+    event_type: string;
+    asset?: {
+      asset_event_type: string;
+      asset_id: string;
+      sender: string;
+      recipient: string;
+      amount: string;
+    };
+  }>;
+}
+
+export interface FtEvent {
+  tx_id: string;
+  asset: {
+    asset_event_type: string;
+    asset_id: string;
+    sender: string;
+    recipient: string;
+    amount: string;
+  };
+  event_type: string;
 }
 
 export const stacksApiService = {
@@ -208,10 +245,129 @@ export const stacksApiService = {
       };
     } catch (error) {
       console.error("Failed to fetch xBTC total supply:", error);
+      return { totalSupply: "0", formatted: "0.00000000" };
+    }
+  },
+
+  /**
+   * Get swxBTC total supply
+   */
+  async getSwxbtcTotalSupply(): Promise<TotalSupply> {
+    try {
+      const response = (await fetchCallReadOnlyFunction({
+        contractAddress: SWXBTC_CONTRACT_ADDRESS,
+        contractName: SWXBTC_CONTRACT_NAME,
+        functionName: "get-total-supply",
+        functionArgs: [],
+        network: NETWORK,
+        senderAddress: SWXBTC_CONTRACT_ADDRESS,
+      })) as ResponseOkCV<UIntCV>;
+
+      const totalSupply = response.value.value.toString();
       return {
-        totalSupply: "0",
-        formatted: "0.00000000",
+        totalSupply,
+        formatted: formatBalance(totalSupply, 8),
       };
+    } catch (error) {
+      console.error("Failed to fetch swxBTC total supply:", error);
+      return { totalSupply: "0", formatted: "0.00000000" };
+    }
+  },
+
+  /**
+   * Get recent transactions for the swap contract, filtered by function name
+   */
+  async getContractTransactions(functionName?: string, limit = 20): Promise<ContractCallTx[]> {
+    try {
+      const response = await fetch(
+        `${STACKS_API_URL}/extended/v1/address/${SWAP_CONTRACT_ID}/transactions?limit=${limit}`
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      
+      let txs = (data.results || []).filter(
+        (tx: any) => tx.tx_type === "contract_call" && tx.tx_status === "success"
+      );
+      
+      if (functionName) {
+        txs = txs.filter(
+          (tx: any) => tx.contract_call?.function_name === functionName
+        );
+      }
+      
+      return txs;
+    } catch (error) {
+      console.error("Failed to fetch contract transactions:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get recent FT events (sBTC transfers) for the swap contract
+   */
+  async getSwapContractFtEvents(limit = 50): Promise<FtEvent[]> {
+    try {
+      const response = await fetch(
+        `${STACKS_API_URL}/extended/v1/address/${SWAP_CONTRACT_ID}/assets?limit=${limit}`
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      
+      const sbtcAssetId = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::sbtc-token`;
+      
+      return (data.results || []).filter(
+        (event: any) =>
+          event.event_type === "fungible_token_asset" &&
+          event.asset?.asset_id === sbtcAssetId &&
+          event.asset?.recipient === SWAP_CONTRACT_ID
+      );
+    } catch (error) {
+      console.error("Failed to fetch FT events:", error);
+      return [];
+    }
+  },
+
+  /**
+   * Get BTC peg wallet address from sBTC registry
+   */
+  async getSbtcPegAddress(): Promise<string | null> {
+    try {
+      const response = await fetch(
+        `${STACKS_API_URL}/v2/contracts/call-read/${SBTC_CONTRACT_ADDRESS}/sbtc-registry/get-current-signer-data`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sender: SWAP_CONTRACT_ADDRESS,
+            arguments: [],
+          }),
+        }
+      );
+      if (!response.ok) return null;
+      const data = await response.json();
+      // The response contains the signer data including the BTC address
+      // This is a best-effort extraction
+      return data?.result || null;
+    } catch (error) {
+      console.error("Failed to fetch sBTC peg address:", error);
+      return null;
+    }
+  },
+
+  /**
+   * Get transaction events (FT transfers within a tx)
+   */
+  async getTransactionEvents(txid: string): Promise<any[]> {
+    try {
+      const response = await fetch(
+        `${STACKS_API_URL}/extended/v1/tx/events?tx_id=${txid}`
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.events || [];
+    } catch (error) {
+      console.error("Failed to fetch tx events:", error);
+      return [];
     }
   },
 };
