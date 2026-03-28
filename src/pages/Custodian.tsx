@@ -9,19 +9,40 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useTheme } from "@/hooks/useTheme";
 import { useWallet } from "@/hooks/useWallet";
-import { CUSTODIAN_ADDRESS, DEPLOYER_ADDRESS } from "@/lib/constants";
+import {
+  CUSTODIAN_ADDRESS,
+  DEPLOYER_ADDRESS,
+  EXPLORER_TX_BASE_URL,
+  SWAP_CONTRACT_ID,
+  SBTC_CONTRACT_ADDRESS,
+  SBTC_CONTRACT_NAME,
+} from "@/lib/constants";
+import {
+  stacksApiService,
+  ContractCallTx,
+  FtEvent,
+} from "@/services/stacksApiService";
 import { walletService } from "@/services/walletService";
 import {
   AlertTriangle,
   ArrowDownToLine,
+  ExternalLink,
   Loader2,
   Shield,
   Sprout,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
+interface MatchedUnwrap {
+  unwrapTx: ContractCallTx;
+  amount: string;
+  matchedSbtcEvent?: FtEvent;
+  matchedAmount?: string;
+}
 
 export default function Custodian() {
   const { wallet, connect, disconnect, isLoading, contractBalances } =
@@ -30,6 +51,10 @@ export default function Custodian() {
   const [isUnwrapping, setIsUnwrapping] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [unwrapTxs, setUnwrapTxs] = useState<MatchedUnwrap[]>([]);
+  const [sbtcEvents, setSbtcEvents] = useState<FtEvent[]>([]);
+  const [isLoadingTxs, setIsLoadingTxs] = useState(true);
+  const [pegAddress, setPegAddress] = useState<string | null>(null);
 
   const isCustodian = wallet.stxAddress === CUSTODIAN_ADDRESS;
   const isDeployer = wallet.stxAddress === DEPLOYER_ADDRESS;
@@ -38,9 +63,66 @@ export default function Custodian() {
     : 0n;
   const canInitUnwrap = contractXbtc > 0n;
 
+  // Fetch transaction history and FT events
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingTxs(true);
+      try {
+        const [initUnwrapTxs, ftEvents, address] = await Promise.all([
+          stacksApiService.getContractTransactions("init-unwrap", 20),
+          stacksApiService.getSwapContractFtEvents(50),
+          stacksApiService.getSbtcPegAddress(),
+        ]);
+
+        setSbtcEvents(ftEvents);
+        setPegAddress(address);
+
+        // Match init-unwrap txs with incoming sBTC events
+        const matched: MatchedUnwrap[] = initUnwrapTxs.map((tx) => {
+          // Extract xBTC amount from the tx args
+          const amountArg = tx.contract_call?.function_args?.find(
+            (a) => a.name === "amount"
+          );
+          const amount = amountArg?.repr?.replace("u", "") || "0";
+
+          // Try to find a matching incoming sBTC event with the same amount
+          const matchedEvent = ftEvents.find(
+            (e) =>
+              e.asset?.amount === amount &&
+              e.asset?.recipient === SWAP_CONTRACT_ID
+          );
+
+          return {
+            unwrapTx: tx,
+            amount,
+            matchedSbtcEvent: matchedEvent,
+            matchedAmount: matchedEvent?.asset?.amount,
+          };
+        });
+
+        setUnwrapTxs(matched);
+      } catch (error) {
+        console.error("Failed to fetch custodian data:", error);
+      } finally {
+        setIsLoadingTxs(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const fmt = (v: string) => {
+    const num = BigInt(v);
+    const whole = num / 100000000n;
+    const frac = num % 100000000n;
+    return `${whole}.${frac.toString().padStart(8, "0")}`;
+  };
+
+  const shortTxid = (txid: string) =>
+    `${txid.slice(0, 6)}…${txid.slice(-4)}`;
+
   const handleInitUnwrap = async () => {
     if (!wallet.isConnected || !isCustodian) return;
-
     setIsUnwrapping(true);
     try {
       const { txid } = await walletService.initUnwrap();
@@ -59,7 +141,6 @@ export default function Custodian() {
 
   const handleWithdrawExcess = async () => {
     if (!wallet.isConnected) return;
-
     setIsWithdrawing(true);
     try {
       const { txid } = await walletService.withdrawExcessSbtc();
@@ -78,7 +159,6 @@ export default function Custodian() {
 
   const handleEnroll = async () => {
     if (!wallet.isConnected || !isDeployer) return;
-
     setIsEnrolling(true);
     try {
       const { txid } = await walletService.enrollDualStacking();
@@ -95,6 +175,16 @@ export default function Custodian() {
     }
   };
 
+  // Unmatched sBTC incoming events (not matched to any unwrap)
+  const matchedTxIds = new Set(
+    unwrapTxs
+      .filter((m) => m.matchedSbtcEvent)
+      .map((m) => m.matchedSbtcEvent!.tx_id)
+  );
+  const unmatchedSbtcEvents = sbtcEvents.filter(
+    (e) => !matchedTxIds.has(e.tx_id)
+  );
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header
@@ -108,7 +198,7 @@ export default function Custodian() {
       />
 
       <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
             <p className="text-muted-foreground">
@@ -123,23 +213,30 @@ export default function Custodian() {
                 Contract Balances
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-4">
-              <div className="flex items-center gap-2">
-                <BitcoinLogo className="h-4 w-4 grayscale opacity-60" />
-                <span className="font-mono text-sm">
-                  {contractBalances?.xbtc.formatted || "0.00000000"} xBTC
-                </span>
+            <CardContent className="space-y-3">
+              <div className="flex gap-4">
+                <div className="flex items-center gap-2">
+                  <BitcoinLogo className="h-4 w-4 grayscale opacity-60" />
+                  <span className="font-mono text-sm">
+                    {contractBalances?.xbtc.formatted || "0.00000000"} xBTC
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <SbtcLogo className="h-4 w-4" />
+                  <span className="font-mono text-sm">
+                    {contractBalances?.sbtc.formatted || "0.00000000"} sBTC
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <SbtcLogo className="h-4 w-4" />
-                <span className="font-mono text-sm">
-                  {contractBalances?.sbtc.formatted || "0.00000000"} sBTC
-                </span>
-              </div>
+              {pegAddress && (
+                <p className="text-xs text-muted-foreground">
+                  sBTC Peg Wallet: <code className="text-[10px]">{pegAddress}</code>
+                </p>
+              )}
             </CardContent>
           </Card>
 
-          {/* Init Unwrap Card - Custodian only */}
+          {/* Init Unwrap Card */}
           <Card className="border-border/50 bg-card/80 backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -147,42 +244,136 @@ export default function Custodian() {
                 Init Unwrap
               </CardTitle>
               <CardDescription>
-                Initiate the xBTC unwrap process. Available when the contract
-                holds xBTC.
+                Initiate the xBTC unwrap process. Available when the contract holds xBTC.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {wallet.isConnected && !isCustodian && (
                 <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive my-4">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
-                  <p>
-                    Your wallet is not the custodian. Only the custodian can
-                    call init-unwrap.
-                  </p>
+                  <p>Only the custodian can call init-unwrap.</p>
                 </div>
               )}
-
               <Button
                 onClick={handleInitUnwrap}
-                disabled={
-                  isUnwrapping ||
-                  !wallet.isConnected ||
-                  !isCustodian ||
-                  !canInitUnwrap
-                }
+                disabled={isUnwrapping || !wallet.isConnected || !isCustodian || !canInitUnwrap}
                 className="w-full"
               >
                 {isUnwrapping ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : !canInitUnwrap ? (
-                  "No xBTC in Contract"
-                ) : (
-                  "Init Unwrap"
-                )}
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
+                ) : !canInitUnwrap ? "No xBTC in Contract" : "Init Unwrap"}
               </Button>
+            </CardContent>
+          </Card>
+
+          {/* Recent Unwrap Transactions + Matching */}
+          <Card className="border-border/50 bg-card/80 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-base">Recent Unwrap Transactions</CardTitle>
+              <CardDescription>
+                Init-unwrap calls and matched incoming sBTC transfers
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingTxs ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                  ))}
+                </div>
+              ) : unwrapTxs.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No recent unwrap transactions found
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {unwrapTxs.map((match) => (
+                    <div
+                      key={match.unwrapTx.tx_id}
+                      className={`rounded-lg border p-3 text-sm ${
+                        match.matchedSbtcEvent
+                          ? "border-green-500/30 bg-green-500/5"
+                          : "border-yellow-500/30 bg-yellow-500/5"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">init-unwrap</span>
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {fmt(match.amount)} xBTC
+                            </span>
+                          </div>
+                          <a
+                            href={`${EXPLORER_TX_BASE_URL}/${match.unwrapTx.tx_id}?chain=mainnet`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                          >
+                            {shortTxid(match.unwrapTx.tx_id)}
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {match.matchedSbtcEvent ? (
+                            <div className="space-y-1">
+                              <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                ✓ sBTC received
+                              </span>
+                              <div>
+                                <a
+                                  href={`${EXPLORER_TX_BASE_URL}/${match.matchedSbtcEvent.tx_id}?chain=mainnet`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5"
+                                >
+                                  {shortTxid(match.matchedSbtcEvent.tx_id)}
+                                  <ExternalLink className="h-2 w-2" />
+                                </a>
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                              ⏳ Awaiting sBTC
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Unmatched incoming sBTC */}
+              {unmatchedSbtcEvents.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    Other incoming sBTC transfers (unmatched)
+                  </p>
+                  <div className="space-y-1.5">
+                    {unmatchedSbtcEvents.map((event, i) => (
+                      <div
+                        key={`${event.tx_id}-${i}`}
+                        className="flex items-center justify-between rounded border border-border/50 p-2 text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <SbtcLogo className="h-3 w-3" />
+                          <span className="font-mono">{fmt(event.asset.amount)} sBTC</span>
+                        </div>
+                        <a
+                          href={`${EXPLORER_TX_BASE_URL}/${event.tx_id}?chain=mainnet`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline inline-flex items-center gap-0.5"
+                        >
+                          {shortTxid(event.tx_id)}
+                          <ExternalLink className="h-2.5 w-2.5" />
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -201,10 +392,7 @@ export default function Custodian() {
               {wallet.isConnected && !isDeployer && (
                 <div className="flex items-center gap-2 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive my-4">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
-                  <p>
-                    Your wallet is not the deployer. Only the deployer can
-                    enroll the contract for dual stacking rewards.
-                  </p>
+                  <p>Only the deployer can enroll.</p>
                 </div>
               )}
               <Button
@@ -214,18 +402,13 @@ export default function Custodian() {
                 className="w-full"
               >
                 {isEnrolling ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enrolling...
-                  </>
-                ) : (
-                  "Enroll Contract"
-                )}
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enrolling...</>
+                ) : "Enroll Contract"}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Withdraw Excess Card - Anyone */}
+          {/* Withdraw Excess Card */}
           <Card className="border-border/50 bg-card/80 backdrop-blur">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -244,13 +427,8 @@ export default function Custodian() {
                 className="w-full"
               >
                 {isWithdrawing ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Withdrawing...
-                  </>
-                ) : (
-                  "Withdraw Excess sBTC"
-                )}
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Withdrawing...</>
+                ) : "Withdraw Excess sBTC"}
               </Button>
             </CardContent>
           </Card>
