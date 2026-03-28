@@ -16,9 +16,13 @@ import {
   CUSTODIAN_ADDRESS,
   DEPLOYER_ADDRESS,
   EXPLORER_TX_BASE_URL,
+  STACKS_API_URL,
   SWAP_CONTRACT_ID,
   SBTC_CONTRACT_ADDRESS,
   SBTC_CONTRACT_NAME,
+  XBTC_CONTRACT_ADDRESS,
+  XBTC_CONTRACT_NAME,
+  XBTC_ASSET_NAME,
 } from "@/lib/constants";
 import {
   stacksApiService,
@@ -77,28 +81,46 @@ export default function Custodian() {
         setSbtcEvents(ftEvents);
         setPegAddress(address);
 
-        // Match init-unwrap txs with incoming sBTC events
-        const matched: MatchedUnwrap[] = initUnwrapTxs.map((tx) => {
-          // Extract xBTC amount from the tx args
-          const amountArg = tx.contract_call?.function_args?.find(
-            (a) => a.name === "amount"
-          );
-          const amount = amountArg?.repr?.replace("u", "") || "0";
+        // Fetch events for each init-unwrap tx to derive xBTC amount
+        const matched: MatchedUnwrap[] = await Promise.all(
+          initUnwrapTxs.map(async (tx) => {
+            // Fetch individual tx to get events
+            let amount = "0";
+            try {
+              const txResponse = await fetch(
+                `${STACKS_API_URL}/extended/v1/tx/${tx.tx_id}`
+              );
+              if (txResponse.ok) {
+                const txData = await txResponse.json();
+                const xbtcAssetId = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::${XBTC_ASSET_NAME}`;
+                const xbtcEvent = (txData.events || []).find(
+                  (e: any) =>
+                    e.event_type === "fungible_token_asset" &&
+                    e.asset?.asset_id === xbtcAssetId
+                );
+                if (xbtcEvent?.asset?.amount) {
+                  amount = xbtcEvent.asset.amount;
+                }
+              }
+            } catch (e) {
+              console.error("Failed to fetch tx events:", e);
+            }
 
-          // Try to find a matching incoming sBTC event with the same amount
-          const matchedEvent = ftEvents.find(
-            (e) =>
-              e.asset?.amount === amount &&
-              e.asset?.recipient === SWAP_CONTRACT_ID
-          );
+            // Try to find a matching incoming sBTC event with the same amount
+            const matchedEvent = ftEvents.find(
+              (e) =>
+                e.asset?.amount === amount &&
+                e.asset?.recipient === SWAP_CONTRACT_ID
+            );
 
-          return {
-            unwrapTx: tx,
-            amount,
-            matchedSbtcEvent: matchedEvent,
-            matchedAmount: matchedEvent?.asset?.amount,
-          };
-        });
+            return {
+              unwrapTx: tx,
+              amount,
+              matchedSbtcEvent: matchedEvent,
+              matchedAmount: matchedEvent?.asset?.amount,
+            };
+          })
+        );
 
         setUnwrapTxs(matched);
       } catch (error) {
