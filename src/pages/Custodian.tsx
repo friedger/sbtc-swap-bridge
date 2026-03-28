@@ -296,9 +296,9 @@ export default function Custodian() {
                           : "border-yellow-500/30 bg-yellow-500/5"
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                             <span className="font-medium">init-unwrap</span>
                             <span className="font-mono text-xs text-muted-foreground">
                               {fmt(match.amount)} xBTC
@@ -314,23 +314,21 @@ export default function Custodian() {
                             <ExternalLink className="h-2.5 w-2.5" />
                           </a>
                         </div>
-                        <div className="text-right shrink-0">
+                        <div className="sm:text-right shrink-0">
                           {match.matchedSbtcEvent ? (
-                            <div className="space-y-1">
+                            <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1">
                               <span className="text-xs text-green-600 dark:text-green-400 font-medium">
                                 ✓ sBTC received
                               </span>
-                              <div>
-                                <a
-                                  href={`${EXPLORER_TX_BASE_URL}/${match.matchedSbtcEvent.tx_id}?chain=mainnet`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5"
-                                >
-                                  {shortTxid(match.matchedSbtcEvent.tx_id)}
-                                  <ExternalLink className="h-2 w-2" />
-                                </a>
-                              </div>
+                              <a
+                                href={`${EXPLORER_TX_BASE_URL}/${match.matchedSbtcEvent.tx_id}?chain=mainnet`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5"
+                              >
+                                {shortTxid(match.matchedSbtcEvent.tx_id)}
+                                <ExternalLink className="h-2 w-2" />
+                              </a>
                             </div>
                           ) : (
                             <span className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
