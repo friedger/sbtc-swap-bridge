@@ -149,6 +149,15 @@ const Index = () => {
               </a>
             </div>
           </div>
+
+          {/* Supply Breakdown Graphic */}
+          <div className="mx-auto max-w-2xl">
+            <SupplyBreakdown
+              contractBalances={contractBalances}
+              swxbtcSupply={swxbtcSupply}
+              isLoading={isLoading && !contractBalances}
+            />
+          </div>
         </div>
       </main>
 
