@@ -1,9 +1,12 @@
 import { Header } from "@/components/Header";
 import { SwapCard } from "@/components/SwapCard";
 import { ContractStats } from "@/components/ContractStats";
+import { SupplyBreakdown } from "@/components/SupplyBreakdown";
 import { TransactionStatusDialog } from "@/components/TransactionStatusDialog";
 import { useWallet } from "@/hooks/useWallet";
 import { useTheme } from "@/hooks/useTheme";
+import { useEffect, useState } from "react";
+import { stacksApiService, TotalSupply } from "@/services/stacksApiService";
 import {
   EXPLORER_CONTRACT_URL,
   EXPLORER_XBTC_URL,
@@ -32,6 +35,11 @@ const Index = () => {
   } = useWallet();
 
   const { theme, toggleTheme } = useTheme();
+  const [swxbtcSupply, setSwxbtcSupply] = useState<TotalSupply | null>(null);
+
+  useEffect(() => {
+    stacksApiService.getSwxbtcTotalSupply().then(setSwxbtcSupply);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
