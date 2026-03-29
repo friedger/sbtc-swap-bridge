@@ -250,11 +250,6 @@ export default function Custodian() {
                   </span>
                 </div>
               </div>
-              {pegAddress && (
-                <p className="text-xs text-muted-foreground">
-                  sBTC Peg Wallet: <code className="text-[10px]">{pegAddress}</code>
-                </p>
-              )}
             </CardContent>
           </Card>
 
@@ -288,12 +283,16 @@ export default function Custodian() {
             </CardContent>
           </Card>
 
-          {/* Recent Unwrap Transactions + Matching */}
+          {/* Finalized Unwrap */}
           <Card className="border-border/50 bg-card/80 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-base">Recent Unwrap Transactions</CardTitle>
+              <CardTitle className="text-base">Finalized Unwrap</CardTitle>
               <CardDescription>
-                Init-unwrap calls and matched incoming sBTC transfers
+                {pegAddress ? (
+                  <>sBTC Peg Wallet: <code className="text-[10px] break-all">{pegAddress}</code></>
+                ) : (
+                  "Init-unwrap calls and matched incoming sBTC transfers"
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>
