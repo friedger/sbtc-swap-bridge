@@ -2,17 +2,19 @@ import {
   NETWORK,
   SBTC_CONTRACT_ADDRESS,
   SBTC_CONTRACT_NAME,
+  SBTC_REGISTRY_CONTRACT_ADDRESS,
+  SBTC_REGISTRY_CONTRACT_NAME,
   STACKS_API_URL,
   SWAP_CONTRACT_ADDRESS,
   SWAP_CONTRACT_ID,
-  SWAP_CONTRACT_NAME,
   SWXBTC_CONTRACT_ADDRESS,
   SWXBTC_CONTRACT_NAME,
   XBTC_CONTRACT_ADDRESS,
-  XBTC_CONTRACT_NAME
+  XBTC_CONTRACT_NAME,
 } from "@/lib/constants";
 import { createClient } from "@stacks/blockchain-api-client";
 import {
+  BufferCV,
   fetchCallReadOnlyFunction,
   ResponseOkCV,
   UIntCV,
@@ -92,7 +94,7 @@ export const stacksApiService = {
           params: {
             path: { principal: address },
           },
-        }
+        },
       );
 
       const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin`;
@@ -133,7 +135,7 @@ export const stacksApiService = {
           params: {
             path: { principal: address },
           },
-        }
+        },
       );
 
       const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin`;
@@ -277,25 +279,29 @@ export const stacksApiService = {
   /**
    * Get recent transactions for the swap contract, filtered by function name
    */
-  async getContractTransactions(functionName?: string, limit = 20): Promise<ContractCallTx[]> {
+  async getContractTransactions(
+    functionName?: string,
+    limit = 20,
+  ): Promise<ContractCallTx[]> {
     try {
-      const response = await fetch(
-        `${STACKS_API_URL}/extended/v1/address/${SWAP_CONTRACT_ID}/transactions?limit=${limit}`
+      const { data } = await client.GET(
+        "/extended/v1/address/{principal}/transactions",
+        {
+          params: {
+            path: { principal: SWAP_CONTRACT_ID },
+            query: { limit },
+          },
+        },
       );
-      if (!response.ok) return [];
-      const data = await response.json();
-      
-      let txs = (data.results || []).filter(
-        (tx: any) => tx.tx_type === "contract_call" && tx.tx_status === "success"
+
+      let txs = (data?.results || []).filter(
+        (tx) =>
+          tx.tx_type === "contract_call" &&
+          tx.tx_status === "success" &&
+          (!functionName || tx.contract_call.function_name === functionName),
       );
-      
-      if (functionName) {
-        txs = txs.filter(
-          (tx: any) => tx.contract_call?.function_name === functionName
-        );
-      }
-      
-      return txs;
+
+      return txs as ContractCallTx[];
     } catch (error) {
       console.error("Failed to fetch contract transactions:", error);
       return [];
@@ -307,20 +313,24 @@ export const stacksApiService = {
    */
   async getSwapContractFtEvents(limit = 50): Promise<FtEvent[]> {
     try {
-      const response = await fetch(
-        `${STACKS_API_URL}/extended/v1/address/${SWAP_CONTRACT_ID}/assets?limit=${limit}`
+      const { data } = await client.GET(
+        "/extended/v1/address/{principal}/assets",
+        {
+          params: {
+            path: { principal: SWAP_CONTRACT_ID },
+            query: { limit },
+          },
+        },
       );
-      if (!response.ok) return [];
-      const data = await response.json();
-      
+
       const sbtcAssetId = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::sbtc-token`;
-      
-      return (data.results || []).filter(
-        (event: any) =>
+
+      return (data?.results || []).filter(
+        (event) =>
           event.event_type === "fungible_token_asset" &&
           event.asset?.asset_id === sbtcAssetId &&
-          event.asset?.recipient === SWAP_CONTRACT_ID
-      );
+          event.asset?.recipient === SWAP_CONTRACT_ID,
+      ) as FtEvent[];
     } catch (error) {
       console.error("Failed to fetch FT events:", error);
       return [];
@@ -332,22 +342,18 @@ export const stacksApiService = {
    */
   async getSbtcPegAddress(): Promise<string | null> {
     try {
-      const response = await fetch(
-        `${STACKS_API_URL}/v2/contracts/call-read/${SBTC_CONTRACT_ADDRESS}/sbtc-registry/get-current-signer-data`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sender: SWAP_CONTRACT_ADDRESS,
-            arguments: [],
-          }),
-        }
-      );
-      if (!response.ok) return null;
-      const data = await response.json();
-      // The response contains the signer data including the BTC address
-      // This is a best-effort extraction
-      return data?.result || null;
+      const response = (await fetchCallReadOnlyFunction({
+        contractAddress: SBTC_REGISTRY_CONTRACT_ADDRESS,
+        contractName: SBTC_REGISTRY_CONTRACT_NAME,
+        functionName: "get-current-aggregate-pubkey",
+        functionArgs: [],
+        network: NETWORK,
+        senderAddress: SWAP_CONTRACT_ADDRESS,
+      })) as BufferCV;
+
+      console.log("sBTC registry response:", response);
+      const result = response?.value;
+      return result;
     } catch (error) {
       console.error("Failed to fetch sBTC peg address:", error);
       return null;
@@ -357,14 +363,17 @@ export const stacksApiService = {
   /**
    * Get transaction events (FT transfers within a tx)
    */
-  async getTransactionEvents(txid: string): Promise<any[]> {
+  async getTransactionEvents(
+    txid: string,
+  ): Promise<Array<Record<string, unknown>>> {
     try {
-      const response = await fetch(
-        `${STACKS_API_URL}/extended/v1/tx/events?tx_id=${txid}`
-      );
-      if (!response.ok) return [];
-      const data = await response.json();
-      return data.events || [];
+      const { data } = await client.GET("/extended/v1/tx/events", {
+        params: {
+          query: { tx_id: txid },
+        },
+      });
+
+      return data?.events || [];
     } catch (error) {
       console.error("Failed to fetch tx events:", error);
       return [];

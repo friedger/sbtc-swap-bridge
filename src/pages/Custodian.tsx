@@ -16,23 +16,23 @@ import {
   CUSTODIAN_ADDRESS,
   DEPLOYER_ADDRESS,
   EXPLORER_TX_BASE_URL,
+  KNOWN_PEG_ADDRESS,
   STACKS_API_URL,
   SWAP_CONTRACT_ID,
-  SBTC_CONTRACT_ADDRESS,
-  SBTC_CONTRACT_NAME,
+  XBTC_ASSET_NAME,
   XBTC_CONTRACT_ADDRESS,
   XBTC_CONTRACT_NAME,
-  XBTC_ASSET_NAME,
 } from "@/lib/constants";
 import {
-  stacksApiService,
   ContractCallTx,
   FtEvent,
+  stacksApiService,
 } from "@/services/stacksApiService";
 import { walletService } from "@/services/walletService";
 import {
   AlertTriangle,
   ArrowDownToLine,
+  BaggageClaim,
   ExternalLink,
   Loader2,
   Shield,
@@ -66,6 +66,7 @@ export default function Custodian() {
     ? BigInt(contractBalances.xbtc.balance)
     : 0n;
   const canInitUnwrap = contractXbtc > 0n;
+  const canFinalizeUnwrap = KNOWN_PEG_ADDRESS === pegAddress;
 
   // Fetch transaction history and FT events
   useEffect(() => {
@@ -88,7 +89,7 @@ export default function Custodian() {
             let amount = "0";
             try {
               const txResponse = await fetch(
-                `${STACKS_API_URL}/extended/v1/tx/${tx.tx_id}`
+                `${STACKS_API_URL}/extended/v1/tx/${tx.tx_id}`,
               );
               if (txResponse.ok) {
                 const txData = await txResponse.json();
@@ -96,7 +97,7 @@ export default function Custodian() {
                 const xbtcEvent = (txData.events || []).find(
                   (e: any) =>
                     e.event_type === "fungible_token_asset" &&
-                    e.asset?.asset_id === xbtcAssetId
+                    e.asset?.asset_id === xbtcAssetId,
                 );
                 if (xbtcEvent?.asset?.amount) {
                   amount = xbtcEvent.asset.amount;
@@ -110,7 +111,7 @@ export default function Custodian() {
             const matchedEvent = ftEvents.find(
               (e) =>
                 e.asset?.amount === amount &&
-                e.asset?.recipient === SWAP_CONTRACT_ID
+                e.asset?.recipient === SWAP_CONTRACT_ID,
             );
 
             return {
@@ -119,7 +120,7 @@ export default function Custodian() {
               matchedSbtcEvent: matchedEvent,
               matchedAmount: matchedEvent?.asset?.amount,
             };
-          })
+          }),
         );
 
         setUnwrapTxs(matched);
@@ -140,8 +141,7 @@ export default function Custodian() {
     return `${whole}.${frac.toString().padStart(8, "0")}`;
   };
 
-  const shortTxid = (txid: string) =>
-    `${txid.slice(0, 6)}…${txid.slice(-4)}`;
+  const shortTxid = (txid: string) => `${txid.slice(0, 6)}…${txid.slice(-4)}`;
 
   const handleInitUnwrap = async () => {
     if (!wallet.isConnected || !isCustodian) return;
@@ -201,10 +201,10 @@ export default function Custodian() {
   const matchedTxIds = new Set(
     unwrapTxs
       .filter((m) => m.matchedSbtcEvent)
-      .map((m) => m.matchedSbtcEvent!.tx_id)
+      .map((m) => m.matchedSbtcEvent!.tx_id),
   );
   const unmatchedSbtcEvents = sbtcEvents.filter(
-    (e) => !matchedTxIds.has(e.tx_id)
+    (e) => !matchedTxIds.has(e.tx_id),
   );
 
   return (
@@ -261,7 +261,8 @@ export default function Custodian() {
                 Init Unwrap
               </CardTitle>
               <CardDescription>
-                Initiate the xBTC unwrap process. Available when the contract holds xBTC.
+                Initiate the xBTC unwrap process. Available when the contract
+                holds xBTC.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -273,29 +274,57 @@ export default function Custodian() {
               )}
               <Button
                 onClick={handleInitUnwrap}
-                disabled={isUnwrapping || !wallet.isConnected || !isCustodian || !canInitUnwrap}
+                disabled={
+                  isUnwrapping ||
+                  !wallet.isConnected ||
+                  !isCustodian ||
+                  !canInitUnwrap
+                }
                 className="w-full"
               >
                 {isUnwrapping ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>
-                ) : !canInitUnwrap ? "No xBTC in Contract" : "Init Unwrap"}
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : !canInitUnwrap ? (
+                  "No xBTC in Contract"
+                ) : (
+                  "Init Unwrap"
+                )}
               </Button>
             </CardContent>
           </Card>
 
-          {/* Finalized Unwrap */}
+          {/* Finalize Unwrap */}
           <Card className="border-border/50 bg-card/80 backdrop-blur">
             <CardHeader>
-              <CardTitle className="text-base">Finalized Unwrap</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <BaggageClaim className="h-5 w-5 text-primary" />
+                Finalize Unwrap
+              </CardTitle>
               <CardDescription>
-                {pegAddress ? (
-                  <>sBTC Peg Wallet: <code className="text-[10px] break-all">{pegAddress}</code></>
-                ) : (
-                  "Init-unwrap calls and matched incoming sBTC transfers"
-                )}
+                Init-unwrap calls and matched incoming sBTC transfers
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {pegAddress && (
+                <div className="flex items-start gap-2 mb-4 rounded-lg border border-border/50 bg-muted/40 p-3 text-sm">
+                  {canFinalizeUnwrap ? (
+                    <span className="text-orange-500 font-bold shrink-0">
+                      ✓
+                    </span>
+                  ) : (
+                    <span className="text-red-500 font-bold shrink-0">✗</span>
+                  )}
+                  <div className="min-w-0">
+                    <span className="text-muted-foreground">
+                      sBTC Peg Wallet:{" "}
+                    </span>
+                    <code className="text-[10px] break-all">{pegAddress}</code>
+                  </div>
+                </div>
+              )}
               {isLoadingTxs ? (
                 <div className="space-y-2">
                   {[1, 2, 3].map((i) => (
@@ -377,7 +406,9 @@ export default function Custodian() {
                       >
                         <div className="flex items-center gap-2">
                           <SbtcLogo className="h-3 w-3" />
-                          <span className="font-mono">{fmt(event.asset.amount)} sBTC</span>
+                          <span className="font-mono">
+                            {fmt(event.asset.amount)} sBTC
+                          </span>
                         </div>
                         <a
                           href={`${EXPLORER_TX_BASE_URL}/${event.tx_id}?chain=mainnet`}
@@ -421,8 +452,13 @@ export default function Custodian() {
                 className="w-full"
               >
                 {isEnrolling ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enrolling...</>
-                ) : "Enroll Contract"}
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enrolling...
+                  </>
+                ) : (
+                  "Enroll Contract"
+                )}
               </Button>
             </CardContent>
           </Card>
@@ -446,8 +482,13 @@ export default function Custodian() {
                 className="w-full"
               >
                 {isWithdrawing ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Withdrawing...</>
-                ) : "Withdraw Excess sBTC"}
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Withdrawing...
+                  </>
+                ) : (
+                  "Withdraw Excess sBTC"
+                )}
               </Button>
             </CardContent>
           </Card>
