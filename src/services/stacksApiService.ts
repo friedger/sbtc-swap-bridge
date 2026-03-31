@@ -29,7 +29,7 @@ const client = createClient({
   baseUrl: STACKS_API_URL,
   headers: {
     "Content-Type": "application/json",
-    "x-api-key": "aa2d5c8b41a282b66231e6d0a31d8f72",
+    "x-api-key": import.meta.env.VITE_HIRO_API_KEY || "",
   }
 });
 
