@@ -114,7 +114,9 @@ export default function Custodian() {
             // Try to find a matching incoming sBTC event with the same amount
             const matchedEvent = ftEvents.find(
               (e) =>
-                e.asset?.amount === amount &&
+                // received amount is between amount and amount - 150 sats
+                BigInt(e.asset.amount) <= BigInt(amount) &&
+                BigInt(e.asset.amount) >= BigInt(amount) - 500n &&
                 e.asset?.recipient === SWAP_CONTRACT_ID,
             );
 
