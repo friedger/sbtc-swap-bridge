@@ -17,11 +17,7 @@ import {
   DEPLOYER_ADDRESS,
   EXPLORER_TX_BASE_URL,
   KNOWN_PEG_ADDRESS,
-  STACKS_API_URL,
   SWAP_CONTRACT_ID,
-  XBTC_ASSET_NAME,
-  XBTC_CONTRACT_ADDRESS,
-  XBTC_CONTRACT_NAME,
 } from "@/lib/constants";
 import {
   ContractCallTx,
@@ -89,27 +85,7 @@ export default function Custodian() {
         // Fetch events for each init-unwrap tx to derive xBTC amount
         const matched: MatchedUnwrap[] = await Promise.all(
           initUnwrapTxs.map(async (tx) => {
-            // Fetch individual tx to get events
-            let amount = "0";
-            try {
-              const txResponse = await fetch(
-                `${STACKS_API_URL}/extended/v1/tx/${tx.tx_id}`,
-              );
-              if (txResponse.ok) {
-                const txData = await txResponse.json();
-                const xbtcAssetId = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::${XBTC_ASSET_NAME}`;
-                const xbtcEvent = (txData.events || []).find(
-                  (e: any) =>
-                    e.event_type === "fungible_token_asset" &&
-                    e.asset?.asset_id === xbtcAssetId,
-                );
-                if (xbtcEvent?.asset?.amount) {
-                  amount = xbtcEvent.asset.amount;
-                }
-              }
-            } catch (e) {
-              console.error("Failed to fetch tx events:", e);
-            }
+            const amount = await stacksApiService.getXbtcTransferAmount(tx.tx_id);
 
             // Try to find a matching incoming sBTC event with the same amount
             const matchedEvent = ftEvents.find(

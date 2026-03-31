@@ -27,6 +27,10 @@ import {
 // Create API client
 const client = createClient({
   baseUrl: STACKS_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": process.env.HIRO_API_KEY || "",
+  }
 });
 
 export interface TokenBalance {
@@ -361,6 +365,25 @@ export const stacksApiService = {
     } catch (error) {
       console.error("Failed to fetch sBTC peg address:", error);
       return null;
+    }
+  },
+
+  /**
+   * Get xBTC transfer amount from a transaction's events
+   */
+  async getXbtcTransferAmount(txid: string): Promise<string> {
+    try {
+      const data = await this.getTransaction(txid);
+      const xbtcAssetId = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::${XBTC_ASSET_NAME}`;
+      const xbtcEvent = (data?.events || []).find(
+        (e: any) =>
+          e.event_type === "fungible_token_asset" &&
+          e.asset?.asset_id === xbtcAssetId,
+      );
+      return xbtcEvent?.asset?.amount || "0";
+    } catch (error) {
+      console.error("Failed to fetch xBTC transfer amount:", error);
+      return "0";
     }
   },
 
