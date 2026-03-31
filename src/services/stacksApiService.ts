@@ -24,12 +24,17 @@ import {
   UIntCV,
 } from "@stacks/transactions";
 
+// Proxy Hiro API calls through edge function for caching and API key management
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const HIRO_PROXY_URL = SUPABASE_URL
+  ? `${SUPABASE_URL}/functions/v1/hiro-proxy`
+  : STACKS_API_URL;
+
 // Create API client
 const client = createClient({
-  baseUrl: STACKS_API_URL,
+  baseUrl: HIRO_PROXY_URL,
   headers: {
     "Content-Type": "application/json",
-    "x-api-key": import.meta.env.VITE_HIRO_API_KEY || "",
   }
 });
 
