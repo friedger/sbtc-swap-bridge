@@ -49,7 +49,7 @@ interface MatchedUnwrap {
 }
 
 export default function Custodian() {
-  const { wallet, connect, disconnect, isLoading, contractBalances } =
+  const { wallet, connect, disconnect, isLoading, contractBalances, swxbtcSupply } =
     useWallet();
   const { theme, toggleTheme } = useTheme();
   const [isUnwrapping, setIsUnwrapping] = useState(false);
@@ -67,6 +67,10 @@ export default function Custodian() {
     : 0n;
   const canInitUnwrap = contractXbtc > 0n;
   const canFinalizeUnwrap = KNOWN_PEG_ADDRESS === pegAddress;
+  const noExcessSbtc = contractBalances
+    ? BigInt(contractBalances.sbtc.balance) <= BigInt(swxbtcSupply?.totalSupply || 0n)
+    : true;
+
 
   // Fetch transaction history and FT events
   useEffect(() => {
@@ -475,9 +479,15 @@ export default function Custodian() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {noExcessSbtc && (
+                <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 my-4">
+                  <span className="font-bold shrink-0">✗</span>
+                  <p>No excess sBTC to withdraw.</p>
+                </div>
+              )}
               <Button
                 onClick={handleWithdrawExcess}
-                disabled={isWithdrawing || !wallet.isConnected}
+                disabled={isWithdrawing || !wallet.isConnected || noExcessSbtc}
                 variant="secondary"
                 className="w-full"
               >

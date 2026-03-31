@@ -9,7 +9,7 @@ import {
   SWXBTC_ASSET_NAME,
   SWXBTC_CONTRACT_ID,
   XBTC_ASSET_NAME,
-  XBTC_CONTRACT_ID
+  XBTC_CONTRACT_ID,
 } from "@/lib/constants";
 import {
   connect,
@@ -22,8 +22,9 @@ import {
   Cl,
   fetchCallReadOnlyFunction,
   Pc,
-  UIntCV
+  UIntCV,
 } from "@stacks/transactions";
+import { stacksApiService } from "./stacksApiService";
 export interface WalletState {
   isConnected: boolean;
   stxAddress: string | null;
@@ -221,17 +222,13 @@ export const walletService = {
         senderAddress: SWAP_CONTRACT_ID,
       })) as UIntCV;
 
-      const contractSxbtcBalance = (await fetchCallReadOnlyFunction({
-        contractAddress: SWAP_CONTRACT_ADDRESS,
-        contractName: SWAP_CONTRACT_NAME,
-        functionName: "get-swapping-xbtc-supply",
-        functionArgs: [],
-        network: NETWORK,
-        senderAddress: SWAP_CONTRACT_ID,
-      })) as UIntCV;
+      const sxbtcSupply = await stacksApiService.getSwxbtcTotalSupply();
 
       const amount =
-        BigInt(contractSbtcBalance.value) - BigInt(contractSxbtcBalance.value);
+        BigInt(contractSbtcBalance.value) - BigInt(sxbtcSupply.totalSupply);
+      if (amount <= 0n) {
+        throw new Error("No excess sBTC to withdraw");
+      }
       const contractSendsSbtc = Pc.principal(SWAP_CONTRACT_ID)
         .willSendEq(amount)
         .ft(SBTC_CONTRACT_ID, SBTC_ASSET_NAME);

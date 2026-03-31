@@ -1,6 +1,8 @@
 import {
   NETWORK,
+  SBTC_ASSET_NAME,
   SBTC_CONTRACT_ADDRESS,
+  SBTC_CONTRACT_ID,
   SBTC_CONTRACT_NAME,
   SBTC_REGISTRY_CONTRACT_ADDRESS,
   SBTC_REGISTRY_CONTRACT_NAME,
@@ -9,7 +11,9 @@ import {
   SWAP_CONTRACT_ID,
   SWXBTC_CONTRACT_ADDRESS,
   SWXBTC_CONTRACT_NAME,
+  XBTC_ASSET_NAME,
   XBTC_CONTRACT_ADDRESS,
+  XBTC_CONTRACT_ID,
   XBTC_CONTRACT_NAME,
 } from "@/lib/constants";
 import { createClient } from "@stacks/blockchain-api-client";
@@ -97,8 +101,8 @@ export const stacksApiService = {
         },
       );
 
-      const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin`;
-      const sbtcKey = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::sbtc-token`;
+      const xbtcKey = `${XBTC_CONTRACT_ID}::${XBTC_ASSET_NAME}`;
+      const sbtcKey = `${SBTC_CONTRACT_ID}::${SBTC_ASSET_NAME}`;
 
       const xbtcBalance = data?.fungible_tokens?.[xbtcKey]?.balance || "0";
       const sbtcBalance = data?.fungible_tokens?.[sbtcKey]?.balance || "0";

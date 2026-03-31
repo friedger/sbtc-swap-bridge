@@ -1,12 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { walletService, WalletState } from '@/services/walletService';
-import { stacksApiService, ContractBalance, UserBalances } from '@/services/stacksApiService';
-import { transactionWebSocketService, TxStatus } from '@/services/transactionWebSocketService';
+import {
+  ContractBalance,
+  stacksApiService,
+  TotalSupply,
+  UserBalances,
+} from "@/services/stacksApiService";
+import {
+  transactionWebSocketService,
+  TxStatus,
+} from "@/services/transactionWebSocketService";
+import { walletService, WalletState } from "@/services/walletService";
+import { useCallback, useEffect, useState } from "react";
 
 interface UseWalletReturn {
   wallet: WalletState;
   userBalances: UserBalances | null;
   contractBalances: ContractBalance | null;
+  swxbtcSupply: TotalSupply | null;
   isLoading: boolean;
   isSwapping: boolean;
   txStatus: TxStatus | null;
@@ -27,8 +36,12 @@ export function useWallet(): UseWalletReturn {
     stxAddress: null,
     btcAddress: null,
   });
+
   const [userBalances, setUserBalances] = useState<UserBalances | null>(null);
-  const [contractBalances, setContractBalances] = useState<ContractBalance | null>(null);
+  const [contractBalances, setContractBalances] =
+    useState<ContractBalance | null>(null);
+  const [swxbtcSupply, setSwxbtcSupply] = useState<TotalSupply | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSwapping, setIsSwapping] = useState(false);
   const [txStatus, setTxStatus] = useState<TxStatus | null>(null);
@@ -56,24 +69,28 @@ export function useWallet(): UseWalletReturn {
     try {
       const balances = await stacksApiService.getSwapContractBalance();
       setContractBalances(balances);
+      const swxbtcSupply = await stacksApiService.getSwxbtcTotalSupply();
+      setSwxbtcSupply(swxbtcSupply);
     } catch (error) {
-      console.error('Failed to fetch contract balances:', error);
+      console.error("Failed to fetch contract balances:", error);
     }
   };
 
   const refreshBalances = useCallback(async () => {
     if (!wallet.stxAddress) return;
-    
+
     setIsLoading(true);
     try {
-      const [user, contract] = await Promise.all([
+      const [user, contract, swxbtcSupply] = await Promise.all([
         stacksApiService.getUserBalances(wallet.stxAddress),
         stacksApiService.getSwapContractBalance(),
+        stacksApiService.getSwxbtcTotalSupply(),
       ]);
       setUserBalances(user);
       setContractBalances(contract);
+      setSwxbtcSupply(swxbtcSupply);
     } catch (error) {
-      console.error('Failed to refresh balances:', error);
+      console.error("Failed to refresh balances:", error);
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +102,7 @@ export function useWallet(): UseWalletReturn {
       const result = await walletService.connect();
       setWallet(result);
     } catch (error) {
-      console.error('Failed to connect:', error);
+      console.error("Failed to connect:", error);
     } finally {
       setIsLoading(false);
     }
@@ -99,7 +116,7 @@ export function useWallet(): UseWalletReturn {
 
   const closeDialog = () => {
     setIsDialogOpen(false);
-    if (txStatus === 'success' || txStatus === 'failed') {
+    if (txStatus === "success" || txStatus === "failed") {
       setTxStatus(null);
       setTxid(null);
     }
@@ -107,23 +124,23 @@ export function useWallet(): UseWalletReturn {
 
   const handleTx = async (txCall: () => Promise<{ txid: string }>) => {
     setIsSwapping(true);
-    setTxStatus('pending');
+    setTxStatus("pending");
     setIsDialogOpen(true);
-    
+
     try {
       const { txid: newTxid } = await txCall();
       setTxid(newTxid);
-      
+
       transactionWebSocketService.subscribeToTransaction(newTxid, (status) => {
         setTxStatus(status);
-        if (status === 'success' || status === 'failed') {
+        if (status === "success" || status === "failed") {
           setIsSwapping(false);
-          if (status === 'success') refreshBalances();
+          if (status === "success") refreshBalances();
         }
       });
     } catch (error) {
-      console.error('Transaction failed:', error);
-      setTxStatus('failed');
+      console.error("Transaction failed:", error);
+      setTxStatus("failed");
       setIsSwapping(false);
     }
   };
@@ -139,7 +156,9 @@ export function useWallet(): UseWalletReturn {
     if (!wallet.stxAddress || !userBalances || !contractBalances) return;
     const userSwxbtc = BigInt(userBalances.swxbtc.balance);
     const contractSbtc = BigInt(contractBalances.sbtc.balance);
-    const amount = Number(userSwxbtc < contractSbtc ? userSwxbtc : contractSbtc);
+    const amount = Number(
+      userSwxbtc < contractSbtc ? userSwxbtc : contractSbtc,
+    );
     if (amount <= 0) return;
     await handleTx(() => walletService.claimSbtc(amount, wallet.stxAddress!));
   };
@@ -148,15 +167,20 @@ export function useWallet(): UseWalletReturn {
     if (!wallet.stxAddress || !userBalances || !contractBalances) return;
     const userSwxbtc = BigInt(userBalances.swxbtc.balance);
     const contractXbtc = BigInt(contractBalances.xbtc.balance);
-    const amount = Number(userSwxbtc < contractXbtc ? userSwxbtc : contractXbtc);
+    const amount = Number(
+      userSwxbtc < contractXbtc ? userSwxbtc : contractXbtc,
+    );
     if (amount <= 0) return;
-    await handleTx(() => walletService.withdrawXbtc(amount, wallet.stxAddress!));
+    await handleTx(() =>
+      walletService.withdrawXbtc(amount, wallet.stxAddress!),
+    );
   };
 
   return {
     wallet,
     userBalances,
     contractBalances,
+    swxbtcSupply,
     isLoading,
     isSwapping,
     txStatus,

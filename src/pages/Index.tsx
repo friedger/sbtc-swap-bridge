@@ -20,6 +20,7 @@ const Index = () => {
     wallet,
     userBalances,
     contractBalances,
+    swxbtcSupply,
     isLoading,
     isSwapping,
     txStatus,
@@ -35,11 +36,6 @@ const Index = () => {
   } = useWallet();
 
   const { theme, toggleTheme } = useTheme();
-  const [swxbtcSupply, setSwxbtcSupply] = useState<TotalSupply | null>(null);
-
-  useEffect(() => {
-    stacksApiService.getSwxbtcTotalSupply().then(setSwxbtcSupply);
-  }, []);
 
   return (
     <div className="min-h-screen bg-background">
