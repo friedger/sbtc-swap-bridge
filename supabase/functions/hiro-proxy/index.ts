@@ -1,4 +1,8 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+};
 
 const HIRO_API_URL = "https://api.mainnet.hiro.so";
 const HIRO_API_KEY = Deno.env.get("VITE_HIRO_API_KEY") || "";
