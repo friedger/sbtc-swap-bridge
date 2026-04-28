@@ -9,6 +9,7 @@ import {
   STACKS_API_URL,
   SWAP_CONTRACT_ADDRESS,
   SWAP_CONTRACT_ID,
+  SWXBTC_ASSET_NAME,
   SWXBTC_CONTRACT_ADDRESS,
   SWXBTC_CONTRACT_NAME,
   XBTC_ASSET_NAME,
@@ -151,9 +152,9 @@ export const stacksApiService = {
         },
       );
 
-      const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::wrapped-bitcoin`;
-      const sbtcKey = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::sbtc-token`;
-      const swxbtcKey = `${SWXBTC_CONTRACT_ADDRESS}.${SWXBTC_CONTRACT_NAME}::${SWXBTC_CONTRACT_NAME}`;
+      const xbtcKey = `${XBTC_CONTRACT_ADDRESS}.${XBTC_CONTRACT_NAME}::${XBTC_ASSET_NAME}`;
+      const sbtcKey = `${SBTC_CONTRACT_ADDRESS}.${SBTC_CONTRACT_NAME}::${SBTC_ASSET_NAME}`;
+      const swxbtcKey = `${SWXBTC_CONTRACT_ADDRESS}.${SWXBTC_CONTRACT_NAME}::${SWXBTC_ASSET_NAME}`;
 
       const xbtcBalance = data?.fungible_tokens?.[xbtcKey]?.balance || "0";
       const sbtcBalance = data?.fungible_tokens?.[sbtcKey]?.balance || "0";

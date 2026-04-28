@@ -39,8 +39,8 @@ export function SwapCard({
   const contractSbtc = contractBalances ? BigInt(contractBalances.sbtc.balance) : 0n;
   const contractXbtc = contractBalances ? BigInt(contractBalances.xbtc.balance) : 0n;
 
-  const canDeposit = userXbtc > 0n;
   const canClaim = userSwxbtc > 0n && contractSbtc > 0n;
+  const canDeposit = userXbtc > 0n && !canClaim;
   const canWithdraw = userSwxbtc > 0n && contractXbtc > 0n;
 
   const fmt = (v: bigint) => (Number(v) / 1e8).toFixed(8);
@@ -90,7 +90,7 @@ export function SwapCard({
             >
               {isSwapping && !hasSwxbtc ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Depositing...</>
-              ) : !canDeposit ? 'No xBTC' : (
+              ) : userXbtc === 0n ? 'No xBTC' : canClaim ? 'Claim sBTC first' : (
                 `Deposit ${fmt(userXbtc)} xBTC`
               )}
             </Button>
