@@ -58,8 +58,26 @@ function getCacheKey(path: string, body: string | null): string {
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = buildCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
+    // Reject preflight from disallowed origins
+    if (!isOriginAllowed(origin)) {
+      return new Response("Forbidden", { status: 403 });
+    }
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Enforce origin allowlist on actual requests.
+  // Browsers always send Origin for cross-origin fetches; same-origin requests
+  // (or non-browser clients) won't have it — block those too since this proxy
+  // is only intended for our web app.
+  if (!isOriginAllowed(origin)) {
+    return new Response(JSON.stringify({ error: "Forbidden origin" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -139,3 +157,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+
