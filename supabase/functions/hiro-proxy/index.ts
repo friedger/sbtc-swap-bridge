@@ -1,8 +1,35 @@
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-};
+// Allowlist of origins permitted to call this proxy
+const ALLOWED_ORIGINS = new Set<string>([
+  "https://xbtc-sbtc-swap.lovable.app",
+  "https://xbtc-swap.fastpool.org",
+  "https://id-preview--51414901-3767-40c7-86d8-44d2500eee19.lovable.app",
+  "http://localhost:5173",
+  "http://localhost:8080",
+]);
+
+// Allow any *.lovable.app / *.lovableproject.com subdomain (preview/sandbox URLs)
+const ALLOWED_ORIGIN_SUFFIXES = [".lovable.app", ".lovableproject.com"];
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  try {
+    const host = new URL(origin).hostname;
+    return ALLOWED_ORIGIN_SUFFIXES.some((suffix) => host.endsWith(suffix));
+  } catch {
+    return false;
+  }
+}
+
+function buildCorsHeaders(origin: string | null): Record<string, string> {
+  const allowOrigin = origin && isOriginAllowed(origin) ? origin : "null";
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 const HIRO_API_URL = "https://api.mainnet.hiro.so";
 const HIRO_API_KEY = Deno.env.get("VITE_HIRO_API_KEY") || "";
@@ -31,8 +58,26 @@ function getCacheKey(path: string, body: string | null): string {
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = buildCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
+    // Reject preflight from disallowed origins
+    if (!isOriginAllowed(origin)) {
+      return new Response("Forbidden", { status: 403 });
+    }
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Enforce origin allowlist on actual requests.
+  // Browsers always send Origin for cross-origin fetches; same-origin requests
+  // (or non-browser clients) won't have it — block those too since this proxy
+  // is only intended for our web app.
+  if (!isOriginAllowed(origin)) {
+    return new Response(JSON.stringify({ error: "Forbidden origin" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -112,3 +157,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+
