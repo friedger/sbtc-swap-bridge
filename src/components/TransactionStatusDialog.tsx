@@ -53,6 +53,7 @@ function getStepStatus(step: string, currentStatus: TxStatus): 'complete' | 'cur
   const currentIndex = order.indexOf(currentStatus);
 
   if (currentStatus === 'failed') return 'pending';
+  if (currentStatus === 'success') return 'complete';
   if (stepIndex < currentIndex) return 'complete';
   if (stepIndex === currentIndex) return 'current';
   return 'pending';
